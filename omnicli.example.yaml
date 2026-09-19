@@ -16,7 +16,7 @@ pipeline:
     stop_on_quality: true
   stages:
     - name: discovery
-      provider: gemini
+      provider: claude
       role: Explorador de produto
       instruction: >-
         Expanda a ideia inicial. Identifique problema, público-alvo, objetivos,
@@ -24,7 +24,7 @@ pipeline:
       timeout_seconds: 300
       max_retries: 1
     - name: critical-review
-      provider: claude
+      provider: codex
       role: Revisor crítico
       instruction: >-
         Questione premissas, contradições, riscos, dependências e excesso de escopo.
@@ -40,7 +40,7 @@ pipeline:
       timeout_seconds: 300
       max_retries: 1
     - name: feasibility
-      provider: gemini
+      provider: claude
       role: Revisor de viabilidade
       instruction: >-
         Avalie custos, complexidade, riscos operacionais e alternativas mais simples.
@@ -56,20 +56,6 @@ pipeline:
       max_retries: 1
 
 providers:
-  gemini:
-    command: gemini
-    args: [-p, "{prompt}", --output-format, text]
-    enabled: true
-    version_args: [--version]
-    capability_args: [--help]
-    required_capabilities: ["-p", "--output-format"]
-    documentation_url: https://github.com/google-gemini/gemini-cli/blob/main/docs/cli/headless.md
-    installation_url: https://github.com/google-gemini/gemini-cli#installation
-    max_prompt_chars: 200000
-    max_output_chars: 500000
-    max_stderr_chars: 20000
-    inherit_environment: false
-    environment_allowlist: [PATH, HOME, USER, TMPDIR, LANG, LC_ALL]
   claude:
     command: claude
     args: [-p, "{prompt}", --output-format, text]
@@ -95,20 +81,6 @@ providers:
     installation_url: https://developers.openai.com/codex/cli
     max_prompt_chars: 200000
     max_output_chars: 500000
-    max_stderr_chars: 20000
-    inherit_environment: false
-    environment_allowlist: [PATH, HOME, USER, TMPDIR, LANG, LC_ALL]
-  copilot:
-    command: copilot
-    args: [-p, "{prompt}"]
-    enabled: true
-    version_args: [--version]
-    capability_args: [help]
-    required_capabilities: ["-p", "--prompt"]
-    documentation_url: https://docs.github.com/en/copilot/concepts/agents/copilot-cli/about-copilot-cli
-    installation_url: https://docs.github.com/en/copilot/how-tos/copilot-cli/set-up-copilot-cli/install-copilot-cli
-    max_prompt_chars: 200000
-    max_output_chars: 500000
-    max_stderr_chars: 20000
+    max_stderr_chars: 100000
     inherit_environment: false
     environment_allowlist: [PATH, HOME, USER, TMPDIR, LANG, LC_ALL]

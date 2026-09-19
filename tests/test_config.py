@@ -17,12 +17,10 @@ def test_default_config_has_critical_pipeline() -> None:
         "feasibility",
         "master-proposal",
     ]
-    assert DEFAULT_CONFIG.providers["gemini"].args[1] == "{prompt}"
     assert DEFAULT_CONFIG.providers["codex"].args[0] == "exec"
+    assert DEFAULT_CONFIG.providers["codex"].max_stderr_chars == 100_000
     assert DEFAULT_CONFIG.providers["claude"].args[-2:] == ["--output-format", "text"]
-    assert DEFAULT_CONFIG.providers["copilot"].args == ["-p", "{prompt}"]
-    assert DEFAULT_CONFIG.providers["copilot"].enabled
-    assert DEFAULT_CONFIG.providers["copilot"].documentation_url
+    assert set(DEFAULT_CONFIG.providers) == {"claude", "codex"}
 
 
 def test_config_round_trip(tmp_path: Path) -> None:
@@ -30,7 +28,7 @@ def test_config_round_trip(tmp_path: Path) -> None:
     write_example_config(config_path)
     loaded = load_config(config_path)
     assert loaded.pipeline.stages[-1].name == "master-proposal"
-    assert loaded.providers["gemini"].command == "gemini"
+    assert loaded.providers["claude"].command == "claude"
 
 
 def test_default_provider_sources_are_registered() -> None:
@@ -59,10 +57,10 @@ def test_unknown_stage_provider_is_rejected() -> None:
 
 def test_config_snapshot_redacts_provider_environment() -> None:
     config = DEFAULT_CONFIG.model_copy(deep=True)
-    config.providers["gemini"].environment = {"API_TOKEN": "secret-value"}
+    config.providers["claude"].environment = {"API_TOKEN": "secret-value"}
 
     snapshot = config_snapshot(config)
 
-    assert snapshot["providers"]["gemini"]["environment"] == {"API_TOKEN": "[REDACTED]"}
+    assert snapshot["providers"]["claude"]["environment"] == {"API_TOKEN": "[REDACTED]"}
     assert "secret-value" not in str(snapshot)
     assert len(config_fingerprint(config)) == 64

@@ -16,7 +16,7 @@ DEFAULT_CONFIG = OmniConfig(
         stages=[
             StageConfig(
                 name="discovery",
-                provider="gemini",
+                provider="claude",
                 role="Explorador de produto",
                 instruction=(
                     "Expanda a ideia inicial. Identifique problema, público-alvo, objetivos, "
@@ -25,7 +25,7 @@ DEFAULT_CONFIG = OmniConfig(
             ),
             StageConfig(
                 name="critical-review",
-                provider="claude",
+                provider="codex",
                 role="Revisor crítico",
                 instruction=(
                     "Questione as premissas da proposta, procure contradições, riscos, excesso de escopo, "
@@ -43,7 +43,7 @@ DEFAULT_CONFIG = OmniConfig(
             ),
             StageConfig(
                 name="feasibility",
-                provider="gemini",
+                provider="claude",
                 role="Revisor de viabilidade",
                 instruction=(
                     "Avalie a proposta arquitetural. Aponte custos, complexidade, riscos operacionais, "
@@ -62,13 +62,6 @@ DEFAULT_CONFIG = OmniConfig(
         ]
     ),
     providers={
-        "gemini": ProviderConfig(
-            command="gemini",
-            args=["-p", "{prompt}", "--output-format", "text"],
-            required_capabilities=["-p", "--output-format"],
-            documentation_url="https://github.com/google-gemini/gemini-cli/blob/main/docs/cli/headless.md",
-            installation_url="https://github.com/google-gemini/gemini-cli#installation",
-        ),
         "claude": ProviderConfig(
             command="claude",
             args=["-p", "{prompt}", "--output-format", "text"],
@@ -82,15 +75,7 @@ DEFAULT_CONFIG = OmniConfig(
             required_capabilities=["exec"],
             documentation_url="https://developers.openai.com/codex/cli",
             installation_url="https://developers.openai.com/codex/cli",
-        ),
-        "copilot": ProviderConfig(
-            command="copilot",
-            args=["-p", "{prompt}"],
-            enabled=True,
-            capability_args=["help"],
-            required_capabilities=["-p", "--prompt"],
-            documentation_url="https://docs.github.com/en/copilot/concepts/agents/copilot-cli/about-copilot-cli",
-            installation_url="https://docs.github.com/en/copilot/how-tos/copilot-cli/set-up-copilot-cli/install-copilot-cli",
+            max_stderr_chars=100_000,
         ),
     },
 )
