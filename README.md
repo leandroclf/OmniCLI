@@ -1,132 +1,115 @@
 # OmniCLI
 
-Orquestrador local de ferramentas de inteligência artificial executadas por linha de comando.
+[![CI](https://github.com/leandroclf/OmniCLI/actions/workflows/ci.yml/badge.svg)](https://github.com/leandroclf/OmniCLI/actions/workflows/ci.yml)
+[![Python 3.10+](https://img.shields.io/badge/Python-3.10%2B-3776AB.svg)](https://www.python.org/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Status: Alpha](https://img.shields.io/badge/status-alpha-orange.svg)](ROADMAP.md)
 
-O OmniCLI coordena CLIs já instaladas e autenticadas no ambiente do desenvolvedor para transformar uma ideia inicial em uma proposta arquitetural estruturada. A primeira versão usa subprocessos locais e não exige chaves de API próprias do OmniCLI.
+**Turn one rough idea into a reviewable engineering proposal by chaining the AI CLIs you already use.**
 
-> O projeto não promete custo zero absoluto. O uso continua sujeito às assinaturas, quotas, limites e termos de uso de cada provedor.
+OmniCLI is a local, configurable orchestrator for authenticated command-line AI tools. Its first workflow passes an idea through product discovery, critical review, architecture, feasibility, and technical editing—while preserving artifacts and provenance for human review.
 
-## O que existe nesta versão
+> OmniCLI does not promise “free AI.” It does not require its own API keys, but every provider remains subject to its subscription, quota, licensing, privacy, and acceptable-use terms.
 
-- Pipeline configurável por YAML.
-- Adaptador genérico para CLIs locais via stdin/stdout.
-- Pipeline padrão com descoberta, revisão crítica, arquitetura, viabilidade e consolidação.
-- Iterações controladas com `--loops`.
-- Workspace por execução com prompts, respostas, logs e manifesto.
-- Timeout, retry limitado e diagnóstico de provedores.
-- Retomada e inspeção de execuções interrompidas.
-- Validação preliminar do documento final.
-- Modo de preview em Markdown no terminal.
-- Testes automatizados e CI.
+[Leia em Português](docs/README.pt-BR.md) · [Architecture](docs/architecture.md) · [Research](docs/research/landscape.md) · [Roadmap](ROADMAP.md)
 
-## Requisitos
+## Why OmniCLI?
 
-- Linux.
-- Python 3.10 ou superior.
-- CLIs de IA instaladas e autenticadas, conforme o pipeline utilizado.
+Most agent tools focus on writing code. OmniCLI focuses first on the communication problem that comes before code: turning ambiguous intent into an explicit, challenged, and traceable engineering plan.
 
-As ferramentas são executadas com as permissões do usuário atual. O OmniCLI não deve ser considerado um sandbox de segurança.
+- **Bring your own CLI:** use locally installed and authenticated tools; OmniCLI stores no provider credentials.
+- **Constructive disagreement:** stages challenge assumptions instead of blindly continuing a “yes, and” chain.
+- **Human-readable artifacts:** every stage produces Markdown and a manifest suitable for review and audit.
+- **Provider-neutral pipelines:** roles, instructions, timeouts, retries, and providers live in YAML.
+- **Safe by default:** no shell execution, automatic code execution, repository mutation, or prompt persistence by default.
+- **Recoverable runs:** inspect or resume interrupted workflows without discarding completed stages.
 
-## Quickstart oficial
+OmniCLI is alpha software. Run it on non-sensitive material first and review all model output.
+
+## 60-second start
+
+Requirements: Linux, Python 3.10+, and the provider CLIs required by your pipeline.
 
 ```bash
+git clone https://github.com/leandroclf/OmniCLI.git
+cd OmniCLI
 bash scripts/bootstrap.sh --apply --check
+source .venv/bin/activate
+omnicli doctor
 ```
 
-Esse é o único caminho recomendado para preparar o ambiente local. O bootstrap usa um ambiente virtual, não usa `sudo`, não instala CLIs de provedores e não inicia chamadas de IA automaticamente.
+The bootstrap creates a local virtual environment and configuration. It never uses `sudo`, installs provider CLIs, or contacts a model unless you explicitly pass `--idea`.
 
-Consulte o [guia de bootstrap](docs/bootstrap.md) para configuração de caminhos, diagnóstico e execução controlada.
-
-## Diagnóstico
-
-```bash
-omnicli providers check
-```
-
-O comando informa quais comandos estão disponíveis e tenta consultar suas versões.
-
-## Primeira execução
-
-Depois de instalar e autenticar as CLIs desejadas, use a configuração padrão:
+After installing and authenticating Gemini CLI, Claude Code, and Codex CLI:
 
 ```bash
 omnicli conceive \
-  "Aplicativo de meditação gamificado com progressão de RPG" \
+  "A gamified meditation app with RPG progression" \
   --loops 1 \
-  --output design_arquitetura.md \
-  --verbose
+  --output architecture-proposal.md \
+  --preview
 ```
 
-Para criar uma configuração editável:
+## Official default invocations
+
+OmniCLI 0.2 uses each provider's documented headless interface instead of assuming every CLI reads a prompt from standard input.
+
+| Provider | Default invocation shape | Default state |
+|---|---|---|
+| Gemini CLI | `gemini -p "{prompt}" --output-format text` | enabled |
+| Claude Code | `claude -p "{prompt}"` | enabled |
+| Codex CLI | `codex exec "{prompt}"` | enabled |
+| GitHub Copilot CLI | standalone `copilot` command | disabled until a stable headless command is configured |
+
+`{prompt}` is passed as one process argument without a shell. Custom tools can omit the placeholder to receive the prompt through `stdin`.
+
+## Core commands
 
 ```bash
+omnicli doctor [--json] [--skip-version]
+omnicli providers check
 omnicli init omnicli.yaml
-omnicli conceive "Minha ideia" --config omnicli.yaml
+omnicli conceive "My idea" --config omnicli.yaml
+omnicli run inspect RUN_ID
+omnicli run resume RUN_ID
 ```
 
-Para visualizar o resultado no terminal:
+`doctor` validates the configuration, required executables, provider versions, and prompt transport without generating content.
 
-```bash
-omnicli conceive "Minha ideia" --preview
-```
+## Pipeline model
 
-Para inspecionar ou retomar uma execução interrompida:
+The default pipeline is deliberately sequential:
 
-```bash
-omnicli run inspect run-20260919-200000-123
-omnicli run resume run-20260919-200000-123 --output proposta.md
-```
+1. Product discovery with Gemini.
+2. Adversarial review with Claude.
+3. Solution architecture with Codex.
+4. Feasibility review with Gemini.
+5. Master proposal editing with Claude.
 
-## Workspace
+Each stage receives the original idea and the previous result. Inputs are delimited as untrusted data, and every prompt instructs the provider not to follow embedded attempts to change roles, reveal secrets, or execute commands. This is defense in depth—not a guarantee against prompt injection.
 
-Cada execução gera uma pasta semelhante a:
+The default prompts preserve the predominant language of the original idea, and the quality check recognizes Portuguese and English proposal sections.
 
-```text
-.omnicli_workspace/run-20260919-200000-123/
-├── input.md
-├── 01-01-discovery.md
-├── 01-02-critical-review.md
-├── 01-03-architecture.md
-├── 01-04-feasibility.md
-├── 01-05-master-proposal.md
-└── manifest.json
-```
+See [omnicli.example.yaml](omnicli.example.yaml) to customize the stages and providers.
 
-Por padrão, o conteúdo completo dos prompts não é persistido. Para habilitar esse registro, configure `retain_prompt_content: true` e avalie antes se o conteúdo pode conter dados sensíveis.
+## Traceability and privacy
 
-## Arquitetura
+Every run creates an isolated workspace with stage outputs and `manifest.json`. The manifest records status, provider version, timestamps, output size, and SHA-256 hashes of prompts and outputs. Full prompt text is not retained unless `retain_prompt_content: true` is explicitly configured.
 
-```text
-CLI ──> PipelineRunner ──> ProviderAdapter ──> subprocesso local
-              │                    │
-              └──────────────> Workspace/Manifest
-```
+Provider subprocesses still inherit the current user's permissions and environment. OmniCLI is an orchestrator, not a sandbox. Read the [threat model](docs/threat-model.md) and [security policy](SECURITY.md) before using sensitive data.
 
-O núcleo depende de um contrato de adaptador. Isso permite adicionar integrações específicas sem espalhar comandos de provedores pelo orquestrador.
+## Project direction
 
-## Segurança e conformidade
+The near-term priorities are reliable adapters, reusable pipeline packs, measurable proposal quality, internationalization, and a documented extension contract. Code implementation and self-healing remain gated behind isolated workspaces, diffs, tests, and explicit human approval.
 
-- Não inclua segredos, dados pessoais ou código proprietário sem avaliar o destino do conteúdo.
-- Não habilite persistência de prompts em ambientes sensíveis sem necessidade.
-- Não execute comandos gerados por modelos automaticamente.
-- Verifique os termos comerciais e limites das CLIs utilizadas.
-- O processo filho pode herdar variáveis de ambiente e permissões do usuário.
+The competitive analysis behind these choices is documented in [docs/research/landscape.md](docs/research/landscape.md). Stars are welcome, but activation success, reproducibility, contributor trust, and useful outputs are the product metrics.
 
-## Desenvolvimento
+## Contributing
 
-```bash
-pytest
-ruff check .
-mypy
-```
+Start with [CONTRIBUTING.md](CONTRIBUTING.md). Bug reports, provider compatibility reports, pipeline examples, translations, documentation, and evaluation cases are all valuable contributions.
 
-## Roadmap
+Please follow the [Code of Conduct](CODE_OF_CONDUCT.md). Security issues should be reported privately according to [SECURITY.md](SECURITY.md).
 
-1. Estabilizar adaptadores e compatibilidade por versão.
-2. Criar validadores de documentos por pipeline.
-3. Implementar geração de código em workspace temporário com aprovação humana.
-4. Evoluir para autocorreção controlada por patches e testes.
+## License
 
-## Licença
-
-MIT. Consulte `LICENSE`.
+MIT © OmniCLI contributors. See [LICENSE](LICENSE).

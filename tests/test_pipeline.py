@@ -37,6 +37,9 @@ def test_pipeline_creates_final_document_and_artifacts(tmp_path: Path) -> None:
     assert output.exists()
     assert workspace.manifest_path.exists()
     assert len(workspace.load_manifest().stages) == len(DEFAULT_CONFIG.pipeline.stages)
+    assert workspace.load_manifest().stages[0].prompt_sha256
+    assert workspace.load_manifest().stages[0].output_sha256
+    assert workspace.load_manifest().total_loops == 1
     assert report.score >= 50
 
 
@@ -61,3 +64,4 @@ def test_pipeline_resume_retries_failed_stage(tmp_path: Path) -> None:
     assert resumed_output == output
     assert report.passed
     assert workspace.load_manifest().status.value == "completed"
+    assert all(result.loop == 1 for result in workspace.load_manifest().stages)

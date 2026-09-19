@@ -1,0 +1,40 @@
+name: Feature request
+description: Propose an outcome that improves OmniCLI
+title: "[Feature]: "
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What user outcome is difficult today?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed behavior
+      description: Describe the smallest useful change and an example CLI experience.
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives and trade-offs
+    validations:
+      required: true
+  - type: textarea
+    id: safety
+    attributes:
+      label: Security, privacy, and provider impact
+      description: Note new permissions, stored data, external calls, quotas, or undocumented provider behavior.
+    validations:
+      required: true
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Checklist
+      options:
+        - label: I searched existing issues and the roadmap.
+          required: true
+        - label: This preserves human review and provider transparency.
+          required: true

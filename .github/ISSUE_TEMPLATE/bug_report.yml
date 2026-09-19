@@ -1,0 +1,55 @@
+name: Bug report
+description: Report a reproducible OmniCLI problem
+title: "[Bug]: "
+body:
+  - type: markdown
+    attributes:
+      value: Do not include credentials, personal data, proprietary prompts, or private provider output.
+  - type: input
+    id: version
+    attributes:
+      label: OmniCLI version
+      placeholder: "omnicli version"
+    validations:
+      required: true
+  - type: dropdown
+    id: provider
+    attributes:
+      label: Provider
+      options:
+        - Gemini CLI
+        - Claude Code
+        - Codex CLI
+        - GitHub Copilot CLI
+        - Custom provider
+        - Not provider-specific
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior and reproduction
+      description: Include a minimal sanitized configuration and commands.
+    validations:
+      required: true
+  - type: textarea
+    id: doctor
+    attributes:
+      label: Sanitized doctor output
+      description: Run `omnicli doctor --json` and remove sensitive paths or values.
+      render: json
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Checklist
+      options:
+        - label: I searched for an existing issue.
+          required: true
+        - label: I removed secrets and sensitive content.
+          required: true

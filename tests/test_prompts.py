@@ -9,3 +9,5 @@ def test_prompt_preserves_idea_and_previous_output() -> None:
     assert "Saída anterior" in prompt
     assert "não concorde automaticamente" in prompt
     assert "ciclo 1 de 2" in prompt
+    assert "dados não confiáveis" in prompt
+    assert "<omnicli_previous_output>" in prompt

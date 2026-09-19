@@ -16,9 +16,20 @@ class SubprocessAdapter(ProviderAdapter):
         self.provider_name = provider_name
         self.config = config
 
-    @property
-    def command(self) -> list[str]:
-        return [self.config.command, *self.config.args]
+    def invocation(self, prompt: str) -> tuple[list[str], str | None]:
+        """Build a shell-free invocation and select argv or stdin transport."""
+        if "\x00" in prompt:
+            raise ProviderError(f"O prompt de {self.provider_name} contém um caractere NUL inválido")
+        if len(prompt) > self.config.max_prompt_chars:
+            raise ProviderError(
+                f"O prompt de {self.provider_name} excede max_prompt_chars="
+                f"{self.config.max_prompt_chars} ({len(prompt)} caracteres)"
+            )
+        if any("{prompt}" in argument and argument != "{prompt}" for argument in self.config.args):
+            raise ProviderError("Use {prompt} como argumento isolado; placeholders embutidos não são permitidos")
+        has_placeholder = "{prompt}" in self.config.args
+        args = [prompt if argument == "{prompt}" else argument for argument in self.config.args]
+        return [self.config.command, *args], None if has_placeholder else prompt
 
     def _environment(self) -> dict[str, str]:
         environment = os.environ.copy()
@@ -54,10 +65,11 @@ class SubprocessAdapter(ProviderAdapter):
 
     def run(self, prompt: str, timeout_seconds: float) -> ProviderResponse:
         self._ensure_available()
+        command, stdin = self.invocation(prompt)
         try:
             process = subprocess.run(
-                self.command,
-                input=prompt,
+                command,
+                input=stdin,
                 capture_output=True,
                 text=True,
                 timeout=timeout_seconds,

@@ -5,7 +5,7 @@ from enum import Enum
 from pathlib import Path
 from typing import Any
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 
 def utc_now() -> datetime:
@@ -58,6 +58,17 @@ class ProviderConfig(BaseModel):
     enabled: bool = True
     version_args: list[str] = Field(default_factory=lambda: ["--version"])
     environment: dict[str, str] = Field(default_factory=dict)
+    max_prompt_chars: int = Field(default=200_000, ge=1_000, le=1_000_000)
+
+    @field_validator("args")
+    @classmethod
+    def validate_prompt_placeholder(cls, value: list[str]) -> list[str]:
+        if any("{prompt}" in argument and argument != "{prompt}" for argument in value):
+            raise ValueError("{prompt} must be an isolated argument")
+        placeholders = sum(argument.count("{prompt}") for argument in value)
+        if placeholders > 1:
+            raise ValueError("provider args may contain {prompt} at most once")
+        return value
 
 
 class OmniConfig(BaseModel):
@@ -65,6 +76,13 @@ class OmniConfig(BaseModel):
 
     pipeline: PipelineConfig
     providers: dict[str, ProviderConfig] = Field(min_length=1)
+
+    @model_validator(mode="after")
+    def stages_reference_known_providers(self) -> OmniConfig:
+        unknown = sorted({stage.provider for stage in self.pipeline.stages if stage.provider not in self.providers})
+        if unknown:
+            raise ValueError(f"pipeline references unknown providers: {', '.join(unknown)}")
+        return self
 
 
 class StageResult(BaseModel):
@@ -81,6 +99,8 @@ class StageResult(BaseModel):
     error: str | None = None
     provider_version: str | None = None
     output_chars: int = 0
+    prompt_sha256: str | None = None
+    output_sha256: str | None = None
 
 
 class RunManifest(BaseModel):
@@ -91,5 +111,6 @@ class RunManifest(BaseModel):
     final_output: str | None = None
     status: StageStatus = StageStatus.PENDING
     current_loop: int = 0
+    total_loops: int = Field(default=1, ge=1, le=10)
     stages: list[StageResult] = Field(default_factory=list)
     config_snapshot: dict[str, Any] = Field(default_factory=dict)

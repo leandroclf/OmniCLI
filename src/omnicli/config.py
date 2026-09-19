@@ -60,10 +60,12 @@ DEFAULT_CONFIG = OmniConfig(
         ]
     ),
     providers={
-        "gemini": ProviderConfig(command="gemini"),
-        "claude": ProviderConfig(command="claude"),
-        "codex": ProviderConfig(command="codex"),
-        "copilot": ProviderConfig(command="gh", args=["copilot"]),
+        "gemini": ProviderConfig(command="gemini", args=["-p", "{prompt}", "--output-format", "text"]),
+        "claude": ProviderConfig(command="claude", args=["-p", "{prompt}"]),
+        "codex": ProviderConfig(command="codex", args=["exec", "{prompt}"]),
+        # The standalone Copilot CLI is detected, but disabled until a stable
+        # documented non-interactive invocation is configured by the user.
+        "copilot": ProviderConfig(command="copilot", enabled=False),
     },
 )
 

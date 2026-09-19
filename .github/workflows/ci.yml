@@ -26,3 +26,7 @@ jobs:
       - run: bash scripts/bootstrap.sh
       - run: ruff check .
       - run: pytest --cov=omnicli --cov-report=term-missing
+      - run: mypy
+      - run: python -m pip check
+      - run: omnicli --help
+      - run: python -m build

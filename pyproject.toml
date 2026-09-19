@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "omnicli"
-version = "0.1.0"
+version = "0.2.0"
 description = "Local CLI orchestrator for AI-assisted engineering workflows"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -31,6 +31,7 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = [
+  "build>=1.2,<2",
   "mypy>=1.10,<2",
   "types-PyYAML>=6.0,<7",
   "pytest>=8.2,<9",

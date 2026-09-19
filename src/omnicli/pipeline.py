@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import time
 from collections.abc import Callable, Mapping
 from datetime import datetime, timezone
@@ -56,6 +57,7 @@ class PipelineRunner:
             status=StageStatus.RUNNING,
             loop=loop,
             prompt_file=str(prompt_path.relative_to(workspace.path)),
+            prompt_sha256=hashlib.sha256(prompt.encode("utf-8")).hexdigest(),
         )
         self.log(f"loop={loop} stage={stage.name} provider={stage.provider}")
         last_error: str | None = None
@@ -78,6 +80,7 @@ class PipelineRunner:
                 result.output_file = str(output_path.relative_to(workspace.path))
                 result.provider_version = provider_version
                 result.output_chars = len(output)
+                result.output_sha256 = hashlib.sha256(output.encode("utf-8")).hexdigest()
                 workspace.add_result(manifest, result)
                 return output
             except ProviderError as exc:
@@ -110,6 +113,7 @@ class PipelineRunner:
             input_file=str(input_path.relative_to(workspace.path)),
             config_snapshot=self.config.model_dump(mode="json"),
             status=StageStatus.RUNNING,
+            total_loops=loops,
         )
         workspace.save_manifest(manifest)
 
@@ -176,12 +180,12 @@ class PipelineRunner:
                 start_loop += 1
                 start_index = 0
 
-        if start_index is None or start_loop > self.config.pipeline.max_loops:
+        if start_index is None or start_loop > manifest.total_loops:
             raise PipelineError("Não foi possível determinar a próxima etapa da execução")
 
         manifest.status = StageStatus.RUNNING
         try:
-            for loop in range(start_loop, self.config.pipeline.max_loops + 1):
+            for loop in range(start_loop, manifest.total_loops + 1):
                 manifest.current_loop = loop
                 workspace.save_manifest(manifest)
                 for stage_index in range(start_index if loop == start_loop else 0, len(self.config.pipeline.stages)):
@@ -192,7 +196,7 @@ class PipelineRunner:
                         loop,
                         workspace.read_text(manifest.input_file).strip(),
                         previous,
-                        self.config.pipeline.max_loops,
+                        manifest.total_loops,
                     )
             final_path = output or self.config.pipeline.output
             final_path.parent.mkdir(parents=True, exist_ok=True)

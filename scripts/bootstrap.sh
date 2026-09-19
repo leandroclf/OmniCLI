@@ -182,8 +182,8 @@ if [[ "$RUN_CHECKS" = true ]]; then
 fi
 
 if [[ "$RUN_PROVIDERS" = true ]]; then
-  log "diagnosticando provedores; nenhuma geração de conteúdo será iniciada"
-  "$VENV_PYTHON" -m omnicli providers check --config "$CONFIG_PATH"
+  log "validando configuração e provedores; nenhuma geração de conteúdo será iniciada"
+  "$VENV_PYTHON" -m omnicli doctor --config "$CONFIG_PATH"
 fi
 
 if [[ -n "$IDEA" ]]; then

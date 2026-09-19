@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 from pathlib import Path
 
 import typer
@@ -10,6 +11,7 @@ from rich.table import Table
 from omnicli import __version__
 from omnicli.adapters.subprocess import SubprocessAdapter, command_exists
 from omnicli.config import load_config, write_example_config
+from omnicli.diagnostics import diagnose
 from omnicli.exceptions import OmniCLIError
 from omnicli.pipeline import PipelineRunner
 
@@ -83,6 +85,43 @@ def providers_check(
         except OmniCLIError as exc:
             table.add_row(name, provider_config.command, "não", str(exc))
     console.print(table)
+
+
+@app.command()
+def doctor(
+    config: Path | None = typer.Option(None, "--config", "-c", help="Arquivo YAML de configuração."),
+    output_json: bool = typer.Option(False, "--json", help="Emite diagnóstico estruturado em JSON."),
+    skip_version: bool = typer.Option(False, "--skip-version", help="Não executa os comandos de versão."),
+) -> None:
+    """Valida configuração, transporte de prompts e CLIs exigidas pelo pipeline."""
+    try:
+        report = diagnose(load_config(config), check_versions=not skip_version)
+    except OmniCLIError as exc:
+        if output_json:
+            console.print_json(json.dumps({"ready": False, "error": str(exc)}, ensure_ascii=False))
+        else:
+            console.print(f"[red]Erro:[/red] {exc}")
+        raise typer.Exit(code=1) from exc
+
+    if output_json:
+        console.print_json(json.dumps(report.as_dict(), ensure_ascii=False))
+    else:
+        table = Table("Provedor", "Obrigatório", "Transporte", "Status", "Detalhe")
+        for provider in report.providers:
+            table.add_row(
+                provider.name,
+                "sim" if provider.required else "não",
+                provider.transport,
+                provider.status,
+                provider.detail,
+            )
+        console.print(table)
+        if report.ready:
+            console.print("[green]Ambiente pronto para o pipeline configurado.[/green]")
+        else:
+            console.print("[red]Ambiente ainda não está pronto.[/red]")
+    if not report.ready:
+        raise typer.Exit(code=1)
 
 
 @app.command("init")

@@ -48,21 +48,25 @@ pipeline:
 providers:
   gemini:
     command: gemini
-    args: []
+    args: [-p, "{prompt}", --output-format, text]
     enabled: true
     version_args: [--version]
+    max_prompt_chars: 200000
   claude:
     command: claude
-    args: []
+    args: [-p, "{prompt}"]
     enabled: true
     version_args: [--version]
+    max_prompt_chars: 200000
   codex:
     command: codex
-    args: []
+    args: [exec, "{prompt}"]
     enabled: true
     version_args: [--version]
+    max_prompt_chars: 200000
   copilot:
-    command: gh
-    args: [copilot]
-    enabled: true
+    command: copilot
+    args: []
+    enabled: false
     version_args: [--version]
+    max_prompt_chars: 200000

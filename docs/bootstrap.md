@@ -10,7 +10,7 @@ O script foi desenhado para ser seguro em ambientes de desenvolvimento:
 - cria ou reutiliza um ambiente virtual local;
 - não instala as CLIs de IA dos provedores;
 - não executa o pipeline nem consome quotas sem `--idea` explícito;
-- `--providers` apenas verifica os comandos configurados;
+- `--providers` executa o diagnóstico de prontidão sem gerar conteúdo;
 - a configuração existente nunca é sobrescrita automaticamente.
 
 ## Quickstart oficial
@@ -88,4 +88,4 @@ source .venv/bin/activate
 omnicli --help
 ```
 
-Se um provedor aparecer como indisponível, instale-o e autentique-o conforme a documentação oficial do próprio provedor. Depois repita `--providers`.
+Se um provedor obrigatório aparecer como indisponível, instale-o e autentique-o conforme a documentação oficial do próprio provedor. Depois repita `--providers`. Para integrar o diagnóstico a scripts, use `omnicli doctor --json`.

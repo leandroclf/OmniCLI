@@ -1,9 +1,11 @@
 from pathlib import Path
 
 import pytest
+from pydantic import ValidationError
 
 from omnicli.config import DEFAULT_CONFIG, load_config, write_example_config
 from omnicli.exceptions import ConfigurationError
+from omnicli.models import OmniConfig, PipelineConfig, ProviderConfig, StageConfig
 
 
 def test_default_config_has_critical_pipeline() -> None:
@@ -15,6 +17,9 @@ def test_default_config_has_critical_pipeline() -> None:
         "feasibility",
         "master-proposal",
     ]
+    assert DEFAULT_CONFIG.providers["gemini"].args[1] == "{prompt}"
+    assert DEFAULT_CONFIG.providers["codex"].args[0] == "exec"
+    assert not DEFAULT_CONFIG.providers["copilot"].enabled
 
 
 def test_config_round_trip(tmp_path: Path) -> None:
@@ -28,3 +33,13 @@ def test_config_round_trip(tmp_path: Path) -> None:
 def test_missing_config_is_reported(tmp_path: Path) -> None:
     with pytest.raises(ConfigurationError):
         load_config(tmp_path / "missing.yaml")
+
+
+def test_unknown_stage_provider_is_rejected() -> None:
+    with pytest.raises(ValidationError, match="unknown providers"):
+        OmniConfig(
+            pipeline=PipelineConfig(
+                stages=[StageConfig(name="review", provider="missing", role="Reviewer", instruction="Review")]
+            ),
+            providers={"known": ProviderConfig(command="known")},
+        )

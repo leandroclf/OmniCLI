@@ -1,0 +1,40 @@
+import sys
+
+import pytest
+from pydantic import ValidationError
+
+from omnicli.adapters.subprocess import SubprocessAdapter
+from omnicli.exceptions import ProviderError
+from omnicli.models import ProviderConfig
+
+
+def test_argument_transport_preserves_prompt_as_one_argument() -> None:
+    config = ProviderConfig(
+        command=sys.executable,
+        args=["-c", "import sys; print(sys.argv[1])", "{prompt}"],
+    )
+    adapter = SubprocessAdapter("python", config)
+    prompt = "texto com espaços; $(não executar)"
+    response = adapter.run(prompt, timeout_seconds=5)
+    assert response.exit_code == 0
+    assert response.stdout.strip() == prompt
+
+
+def test_stdin_transport_remains_available_for_custom_clis() -> None:
+    config = ProviderConfig(
+        command=sys.executable,
+        args=["-c", "import sys; print(sys.stdin.read())"],
+    )
+    response = SubprocessAdapter("python", config).run("via stdin", timeout_seconds=5)
+    assert response.stdout.strip() == "via stdin"
+
+
+def test_prompt_size_limit_is_enforced() -> None:
+    config = ProviderConfig(command=sys.executable, max_prompt_chars=1_000)
+    with pytest.raises(ProviderError, match="max_prompt_chars"):
+        SubprocessAdapter("python", config).invocation("x" * 1_001)
+
+
+def test_embedded_prompt_placeholder_is_rejected() -> None:
+    with pytest.raises(ValidationError, match="isolated argument"):
+        ProviderConfig(command="tool", args=["--prompt={prompt}"])
