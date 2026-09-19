@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import hashlib
+import json
 from pathlib import Path
 from typing import Any, cast
 
@@ -96,6 +98,20 @@ DEFAULT_CONFIG = OmniConfig(
 
 def _dump_model(model: Any) -> dict[str, Any]:
     return cast(dict[str, Any], model.model_dump(mode="json"))
+
+
+def config_snapshot(config: OmniConfig) -> dict[str, Any]:
+    """Return a reproducibility snapshot with configured environment values redacted."""
+    snapshot = _dump_model(config)
+    for provider in snapshot.get("providers", {}).values():
+        if isinstance(provider, dict) and provider.get("environment"):
+            provider["environment"] = {key: "[REDACTED]" for key in provider["environment"]}
+    return snapshot
+
+
+def config_fingerprint(config: OmniConfig) -> str:
+    payload = json.dumps(config_snapshot(config), sort_keys=True, ensure_ascii=False, separators=(",", ":"))
+    return hashlib.sha256(payload.encode("utf-8")).hexdigest()
 
 
 def load_config(path: Path | None) -> OmniConfig:

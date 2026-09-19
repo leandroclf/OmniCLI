@@ -25,9 +25,15 @@ class TerminationReason(str, Enum):
     STABLE_RESULT = "stable_result"
     MAX_PASSES = "max_passes"
     MAX_STEPS = "max_steps"
+    MAX_CALLS = "max_calls"
     QUALITY_GATE_BLOCKED = "quality_gate_blocked"
     COMPLETED = "completed"
     FAILED = "failed"
+
+
+class InputRetention(str, Enum):
+    HASH_ONLY = "hash-only"
+    LOCAL = "local"
 
 
 class StageConfig(BaseModel):
@@ -51,6 +57,8 @@ class QualityLoopConfig(BaseModel):
     min_improvement: int = Field(default=3, ge=0, le=100)
     stable_passes: int = Field(default=1, ge=1, le=5)
     max_steps: int = Field(default=30, ge=1, le=100)
+    max_calls: int = Field(default=50, ge=1, le=500)
+    stop_on_quality: bool = True
 
 
 class PipelineConfig(BaseModel):
@@ -62,6 +70,8 @@ class PipelineConfig(BaseModel):
     workspace: Path = Path(".omnicli_workspace")
     output: Path = Path("proposta.md")
     retain_prompt_content: bool = False
+    input_retention: InputRetention = InputRetention.HASH_ONLY
+    graph_version: str = Field(default="conception-v1", min_length=1, max_length=40)
     quality_loop: QualityLoopConfig = Field(default_factory=QualityLoopConfig)
 
     @field_validator("stages")
@@ -85,7 +95,13 @@ class ProviderConfig(BaseModel):
     documentation_url: str | None = None
     installation_url: str | None = None
     environment: dict[str, str] = Field(default_factory=dict)
+    environment_allowlist: list[str] = Field(
+        default_factory=lambda: ["PATH", "HOME", "USER", "TMPDIR", "LANG", "LC_ALL"]
+    )
+    inherit_environment: bool = False
     max_prompt_chars: int = Field(default=200_000, ge=1_000, le=1_000_000)
+    max_output_chars: int = Field(default=500_000, ge=1_000, le=5_000_000)
+    max_stderr_chars: int = Field(default=20_000, ge=1_000, le=1_000_000)
 
     @field_validator("args")
     @classmethod
@@ -128,23 +144,30 @@ class StageResult(BaseModel):
     output_chars: int = 0
     prompt_sha256: str | None = None
     output_sha256: str | None = None
+    attempts: int = 0
+    duration_ms: int | None = None
 
 
 class RunManifest(BaseModel):
     run_id: str
     created_at: datetime = Field(default_factory=utc_now)
     updated_at: datetime = Field(default_factory=utc_now)
-    input_file: str
+    input_file: str | None = None
+    input_sha256: str | None = None
     final_output: str | None = None
+    output_target: str | None = None
     status: StageStatus = StageStatus.PENDING
     current_loop: int = 0
     total_loops: int = Field(default=1, ge=1, le=10)
     stages: list[StageResult] = Field(default_factory=list)
     config_snapshot: dict[str, Any] = Field(default_factory=dict)
+    config_fingerprint: str | None = None
+    graph_version: str = "conception-v1"
     execution_mode: str = "legacy"
     current_stage: str | None = None
     next_stage: str | None = None
     steps_used: int = Field(default=0, ge=0)
+    calls_used: int = Field(default=0, ge=0)
     passes_completed: int = Field(default=0, ge=0)
     quality_score: int | None = Field(default=None, ge=0, le=100)
     best_quality_score: int | None = Field(default=None, ge=0, le=100)
@@ -155,5 +178,7 @@ class RunManifest(BaseModel):
     quality_missing_concepts: list[str] = Field(default_factory=list)
     quality_security_violations: list[str] = Field(default_factory=list)
     quality_critical_contradictions: list[str] = Field(default_factory=list)
+    quality_evidence: list[str] = Field(default_factory=list)
+    quality_evaluation_version: str | None = None
     best_output_file: str | None = None
     termination_reason: TerminationReason | None = None

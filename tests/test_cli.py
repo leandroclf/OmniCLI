@@ -34,3 +34,18 @@ def test_doctor_json_is_automation_friendly(tmp_path: Path) -> None:
     assert payload["ready"] is True
     assert payload["providers"][0]["transport"] == "argv"
     assert payload["providers"][0]["capability_status"] is None
+
+
+def test_providers_check_returns_nonzero_when_required_provider_is_missing(tmp_path: Path) -> None:
+    config = OmniConfig(
+        pipeline=PipelineConfig(
+            stages=[StageConfig(name="review", provider="missing", role="Reviewer", instruction="Review")]
+        ),
+        providers={"missing": ProviderConfig(command="definitely-not-installed")},
+    )
+    config_path = tmp_path / "omnicli.yaml"
+    config_path.write_text(yaml.safe_dump(config.model_dump(mode="json")), encoding="utf-8")
+
+    result = CliRunner().invoke(app, ["providers", "check", "--config", str(config_path)])
+
+    assert result.exit_code == 1

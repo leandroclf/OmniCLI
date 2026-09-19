@@ -28,5 +28,6 @@ jobs:
       - run: pytest --cov=omnicli --cov-report=term-missing
       - run: mypy
       - run: python -m pip check
+      - run: pip-audit
       - run: omnicli --help
       - run: python -m build

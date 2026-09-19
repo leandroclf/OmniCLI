@@ -4,12 +4,16 @@ pipeline:
   workspace: .omnicli_workspace
   output: proposta.md
   retain_prompt_content: false
+  input_retention: hash-only
+  graph_version: conception-v1
   quality_loop:
     enabled: false
     min_score: 80
     min_improvement: 3
     stable_passes: 1
     max_steps: 30
+    max_calls: 50
+    stop_on_quality: true
   stages:
     - name: discovery
       provider: gemini
@@ -62,6 +66,10 @@ providers:
     documentation_url: https://github.com/google-gemini/gemini-cli/blob/main/docs/cli/headless.md
     installation_url: https://github.com/google-gemini/gemini-cli#installation
     max_prompt_chars: 200000
+    max_output_chars: 500000
+    max_stderr_chars: 20000
+    inherit_environment: false
+    environment_allowlist: [PATH, HOME, USER, TMPDIR, LANG, LC_ALL]
   claude:
     command: claude
     args: [-p, "{prompt}", --output-format, text]
@@ -72,6 +80,10 @@ providers:
     documentation_url: https://code.claude.com/docs/en/cli-reference
     installation_url: https://code.claude.com/docs/en/setup
     max_prompt_chars: 200000
+    max_output_chars: 500000
+    max_stderr_chars: 20000
+    inherit_environment: false
+    environment_allowlist: [PATH, HOME, USER, TMPDIR, LANG, LC_ALL]
   codex:
     command: codex
     args: [exec, "{prompt}"]
@@ -82,6 +94,10 @@ providers:
     documentation_url: https://developers.openai.com/codex/cli
     installation_url: https://developers.openai.com/codex/cli
     max_prompt_chars: 200000
+    max_output_chars: 500000
+    max_stderr_chars: 20000
+    inherit_environment: false
+    environment_allowlist: [PATH, HOME, USER, TMPDIR, LANG, LC_ALL]
   copilot:
     command: copilot
     args: [-p, "{prompt}"]
@@ -92,3 +108,7 @@ providers:
     documentation_url: https://docs.github.com/en/copilot/concepts/agents/copilot-cli/about-copilot-cli
     installation_url: https://docs.github.com/en/copilot/how-tos/copilot-cli/set-up-copilot-cli/install-copilot-cli
     max_prompt_chars: 200000
+    max_output_chars: 500000
+    max_stderr_chars: 20000
+    inherit_environment: false
+    environment_allowlist: [PATH, HOME, USER, TMPDIR, LANG, LC_ALL]

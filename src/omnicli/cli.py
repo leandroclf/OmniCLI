@@ -55,7 +55,7 @@ def conceive(
             workspace_root=workspace,
             refine=True if refine else None,
         )
-    except OmniCLIError as exc:
+    except (OmniCLIError, ValueError) as exc:
         console.print(f"[red]Erro:[/red] {exc}")
         raise typer.Exit(code=1) from exc
     console.print(f"[green]Concluído:[/green] {final_path}")
@@ -82,7 +82,7 @@ def providers_check(
     """Verifica quais CLIs estão instaladas e respondendo."""
     try:
         loaded = load_config(config)
-    except OmniCLIError as exc:
+    except (OmniCLIError, ValueError) as exc:
         console.print(f"[red]Erro:[/red] {exc}")
         raise typer.Exit(code=1) from exc
     report = diagnose(loaded, check_versions=True, check_capabilities=capabilities)
@@ -96,6 +96,8 @@ def providers_check(
             provider.capability_status or "não verificado",
         )
     console.print(table)
+    if not report.ready:
+        raise typer.Exit(code=1)
 
 
 @app.command()
@@ -162,6 +164,16 @@ def resume_run(
     output: Path | None = typer.Option(None, "--output", "-o", help="Arquivo Markdown final."),
     config: Path | None = typer.Option(None, "--config", "-c", help="Arquivo YAML de configuração."),
     workspace: Path | None = typer.Option(None, "--workspace", help="Diretório dos artefatos."),
+    idea: str | None = typer.Option(
+        None,
+        "--idea",
+        help="Ideia original quando a execução foi configurada para não persistir conteúdo.",
+    ),
+    allow_config_change: bool = typer.Option(
+        False,
+        "--allow-config-change",
+        help="Permite retomar com configuração diferente após revisão manual.",
+    ),
     verbose: bool = typer.Option(False, "--verbose", "-v", help="Exibe detalhes da execução."),
 ) -> None:
     """Retoma a primeira etapa incompleta de uma execução."""
@@ -171,8 +183,10 @@ def resume_run(
             run_id=run_id,
             output=output,
             workspace_root=workspace,
+            idea=idea,
+            allow_config_change=allow_config_change,
         )
-    except OmniCLIError as exc:
+    except (OmniCLIError, ValueError) as exc:
         console.print(f"[red]Erro:[/red] {exc}")
         raise typer.Exit(code=1) from exc
     console.print(f"[green]Retomado e concluído:[/green] {final_path}")
@@ -206,6 +220,11 @@ def inspect_run(
             result.output_file or result.error or "-",
         )
     console.print(f"Execução: {manifest.run_id} | status={manifest.status.value}")
+    fingerprint = manifest.config_fingerprint[:12] if manifest.config_fingerprint else "-"
+    console.print(
+        f"Grafo: {manifest.graph_version} | chamadas={manifest.calls_used} | "
+        f"configuração={fingerprint}"
+    )
     if manifest.execution_mode == "refinement":
         best_score = manifest.best_quality_score if manifest.best_quality_score is not None else "-"
         console.print(

@@ -172,6 +172,8 @@ else
 fi
 
 VENV_PYTHON="$VENV_DIR/bin/python"
+log "atualizando o instalador do ambiente virtual"
+PIP_DISABLE_PIP_VERSION_CHECK=1 "$VENV_PYTHON" -m pip install --upgrade pip
 log "instalando OmniCLI e dependências de desenvolvimento"
 (
   cd "$ROOT_DIR"
@@ -192,6 +194,7 @@ if [[ "$RUN_CHECKS" = true ]]; then
     "$VENV_PYTHON" -m pytest --cov=omnicli --cov-report=term-missing
     "$VENV_PYTHON" -m ruff check .
     "$VENV_PYTHON" -m mypy
+    "$VENV_PYTHON" -m pip_audit
   )
 fi
 

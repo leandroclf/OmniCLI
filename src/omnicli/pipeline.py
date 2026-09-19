@@ -8,6 +8,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from omnicli.adapters.base import ProviderAdapter
+from omnicli.config import config_fingerprint, config_snapshot
 from omnicli.exceptions import PipelineError, ProviderError
 from omnicli.models import (
     OmniConfig,
@@ -31,6 +32,8 @@ class RefinementSettings:
     min_improvement: int
     stable_passes: int
     max_steps: int
+    max_calls: int
+    stop_on_quality: bool
 
     @classmethod
     def from_config(cls, config: QualityLoopConfig, enabled: bool | None = None) -> RefinementSettings:
@@ -40,6 +43,8 @@ class RefinementSettings:
             min_improvement=config.min_improvement,
             stable_passes=config.stable_passes,
             max_steps=config.max_steps,
+            max_calls=config.max_calls,
+            stop_on_quality=config.stop_on_quality,
         )
 
 
@@ -69,6 +74,7 @@ class PipelineRunner:
         idea: str,
         previous_output: str,
         total_loops: int,
+        max_calls: int | None = None,
     ) -> str:
         stage = self.config.pipeline.stages[stage_index]
         adapter = self._adapter(stage.provider)
@@ -91,7 +97,15 @@ class PipelineRunner:
         for attempt in range(stage.max_retries + 1):
             try:
                 provider_version = adapter.check()
+                if max_calls is not None and manifest.calls_used >= max_calls:
+                    raise PipelineError(
+                        f"Limite de chamadas atingido: max_calls={max_calls}; etapa pendente={stage.name}"
+                    )
+                manifest.calls_used += 1
+                started = time.perf_counter()
                 response = adapter.run(prompt, stage.timeout_seconds)
+                result.attempts = attempt + 1
+                result.duration_ms = int((time.perf_counter() - started) * 1000)
                 if response.exit_code != 0:
                     detail = response.stderr.strip()[-1000:]
                     raise ProviderError(
@@ -112,6 +126,7 @@ class PipelineRunner:
                 return output
             except ProviderError as exc:
                 last_error = str(exc)
+                result.attempts = attempt + 1
                 self.log(f"tentativa={attempt + 1} falhou: {last_error}")
                 if attempt < stage.max_retries:
                     time.sleep(min(2**attempt, 8))
@@ -137,6 +152,8 @@ class PipelineRunner:
         manifest.quality_missing_concepts = list(report.missing_concepts)
         manifest.quality_security_violations = list(report.security_violations)
         manifest.quality_critical_contradictions = list(report.critical_contradictions)
+        manifest.quality_evidence = list(report.evidence)
+        manifest.quality_evaluation_version = report.evaluation_version
         last_result = manifest.stages[-1] if manifest.stages else None
         output_file = last_result.output_file if last_result else None
         if manifest.best_quality_score is None or report.score >= manifest.best_quality_score:
@@ -159,15 +176,16 @@ class PipelineRunner:
     ) -> tuple[Path, Workspace, QualityReport]:
         if not content.strip():
             raise PipelineError("O pipeline terminou sem produzir uma proposta")
-        final_path = output or self.config.pipeline.output
-        final_path.parent.mkdir(parents=True, exist_ok=True)
-        final_path.write_text(content.rstrip() + "\n", encoding="utf-8")
+        final_path = output or Path(manifest.output_target or self.config.pipeline.output)
+        Workspace.write_atomic(final_path, content.rstrip() + "\n")
         manifest.final_output = str(final_path)
         manifest.quality_score = report.score
         manifest.quality_warnings = list(report.warnings)
         manifest.quality_missing_concepts = list(report.missing_concepts)
         manifest.quality_security_violations = list(report.security_violations)
         manifest.quality_critical_contradictions = list(report.critical_contradictions)
+        manifest.quality_evidence = list(report.evidence)
+        manifest.quality_evaluation_version = report.evaluation_version
         manifest.current_stage = None
         manifest.next_stage = None
         manifest.status = StageStatus.COMPLETED
@@ -202,6 +220,11 @@ class PipelineRunner:
                         raise PipelineError("max_steps foi atingido antes de produzir uma Proposta Mestra")
                     manifest.termination_reason = TerminationReason.MAX_STEPS
                     return best_output, assess_document(best_output)
+                if manifest.calls_used >= settings.max_calls:
+                    if not manifest.best_output_file:
+                        raise PipelineError("max_calls foi atingido antes de produzir uma Proposta Mestra")
+                    manifest.termination_reason = TerminationReason.MAX_CALLS
+                    return best_output, assess_document(best_output)
 
                 stage = self.config.pipeline.stages[stage_index]
                 manifest.current_stage = stage.name
@@ -216,6 +239,7 @@ class PipelineRunner:
                     idea,
                     previous,
                     manifest.total_loops,
+                    settings.max_calls,
                 )
                 manifest.steps_used += 1
                 stage_index += 1
@@ -226,7 +250,7 @@ class PipelineRunner:
             manifest.current_stage = None
             workspace.save_manifest(manifest)
 
-            if report.gate_passed(settings.min_score):
+            if settings.stop_on_quality and report.gate_passed(settings.min_score):
                 manifest.termination_reason = TerminationReason.QUALITY_THRESHOLD
                 return best_output, assess_document(best_output)
 
@@ -272,11 +296,23 @@ class PipelineRunner:
             raise PipelineError(f"--loops deve estar entre 1 e {self.config.pipeline.max_loops}")
         settings = RefinementSettings.from_config(self.config.pipeline.quality_loop, enabled=refine)
         workspace = Workspace(workspace_root or self.config.pipeline.workspace, run_id=run_id)
-        input_path = workspace.write_text("input.md", idea.strip() + "\n")
+        if run_id and workspace.manifest_path.exists():
+            raise PipelineError(f"A execução {run_id} já existe; use run resume para continuar")
+        normalized_idea = idea.strip()
+        input_sha256 = hashlib.sha256(normalized_idea.encode("utf-8")).hexdigest()
+        input_path = (
+            workspace.write_text("input.md", normalized_idea + "\n")
+            if self.config.pipeline.input_retention.value == "local"
+            else None
+        )
         manifest = RunManifest(
             run_id=workspace.run_id,
-            input_file=str(input_path.relative_to(workspace.path)),
-            config_snapshot=self.config.model_dump(mode="json"),
+            input_file=str(input_path.relative_to(workspace.path)) if input_path else None,
+            input_sha256=input_sha256,
+            output_target=str(output or self.config.pipeline.output),
+            config_snapshot=config_snapshot(self.config),
+            config_fingerprint=config_fingerprint(self.config),
+            graph_version=self.config.pipeline.graph_version,
             status=StageStatus.RUNNING,
             total_loops=loops,
             execution_mode="refinement" if settings.enabled else "legacy",
@@ -286,7 +322,7 @@ class PipelineRunner:
         previous = ""
         try:
             if settings.enabled:
-                previous, report = self._run_refinement(workspace, manifest, idea.strip(), settings)
+                previous, report = self._run_refinement(workspace, manifest, normalized_idea, settings)
                 return self._write_final(workspace, manifest, previous, output, report)
 
             for loop in range(1, loops + 1):
@@ -301,9 +337,10 @@ class PipelineRunner:
                         manifest,
                         stage_index,
                         loop,
-                        idea.strip(),
+                        normalized_idea,
                         previous,
                         loops,
+                        self.config.pipeline.quality_loop.max_calls,
                     )
                     manifest.steps_used += 1
                 manifest.passes_completed = loop
@@ -316,11 +353,25 @@ class PipelineRunner:
             workspace.save_manifest(manifest)
             raise
 
+    def _resume_idea(self, workspace: Workspace, manifest: RunManifest, idea: str | None) -> str:
+        if idea is not None and idea.strip():
+            normalized = idea.strip()
+            input_hash = hashlib.sha256(normalized.encode("utf-8")).hexdigest()
+            if manifest.input_sha256 and input_hash != manifest.input_sha256:
+                raise PipelineError("A ideia informada não corresponde ao hash registrado na execução")
+            return normalized
+        if manifest.input_file:
+            return workspace.read_text(manifest.input_file).strip()
+        raise PipelineError(
+            "Esta execução não reteve a ideia original; informe --idea para retomar com validação de hash"
+        )
+
     def _resume_refinement(
         self,
         workspace: Workspace,
         manifest: RunManifest,
         output: Path | None,
+        idea: str,
     ) -> tuple[Path, Workspace, QualityReport]:
         stage_indexes = {stage.name: index for index, stage in enumerate(self.config.pipeline.stages)}
         start_index = stage_indexes.get(manifest.next_stage or "")
@@ -334,7 +385,6 @@ class PipelineRunner:
         settings = RefinementSettings.from_config(self.config.pipeline.quality_loop, enabled=True)
         manifest.status = StageStatus.RUNNING
         try:
-            idea = workspace.read_text(manifest.input_file).strip()
             content, report = self._run_refinement(
                 workspace,
                 manifest,
@@ -357,16 +407,25 @@ class PipelineRunner:
         run_id: str,
         output: Path | None = None,
         workspace_root: Path | None = None,
+        idea: str | None = None,
+        allow_config_change: bool = False,
     ) -> tuple[Path, Workspace, QualityReport]:
         """Resume the first incomplete stage from an existing workspace."""
         workspace = Workspace(workspace_root or self.config.pipeline.workspace, run_id=run_id)
         if not workspace.manifest_path.exists():
             raise PipelineError(f"Execução não encontrada: {run_id}")
         manifest = workspace.load_manifest()
+        if manifest.config_fingerprint and not allow_config_change:
+            current_fingerprint = config_fingerprint(self.config)
+            if current_fingerprint != manifest.config_fingerprint:
+                raise PipelineError(
+                    "A configuração atual difere da configuração da execução; "
+                    "use --allow-config-change apenas após revisar o impacto"
+                )
         if manifest.status == StageStatus.COMPLETED:
             raise PipelineError(f"A execução {run_id} já foi concluída")
         if manifest.execution_mode == "refinement":
-            return self._resume_refinement(workspace, manifest, output)
+            return self._resume_refinement(workspace, manifest, output, self._resume_idea(workspace, manifest, idea))
 
         stage_indexes = {stage.name: index for index, stage in enumerate(self.config.pipeline.stages)}
         last_result = manifest.stages[-1] if manifest.stages else None
@@ -379,6 +438,7 @@ class PipelineRunner:
             previous_result = completed_results[-1]
             if previous_result.output_file:
                 previous = workspace.read_text(previous_result.output_file)
+        resume_idea = self._resume_idea(workspace, manifest, idea)
 
         if last_result.status == StageStatus.FAILED:
             start_loop = last_result.loop
@@ -406,7 +466,7 @@ class PipelineRunner:
                         manifest,
                         stage_index,
                         loop,
-                        workspace.read_text(manifest.input_file).strip(),
+                        resume_idea,
                         previous,
                         manifest.total_loops,
                     )

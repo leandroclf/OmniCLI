@@ -3,7 +3,7 @@ from pathlib import Path
 import pytest
 from pydantic import ValidationError
 
-from omnicli.config import DEFAULT_CONFIG, load_config, write_example_config
+from omnicli.config import DEFAULT_CONFIG, config_fingerprint, config_snapshot, load_config, write_example_config
 from omnicli.exceptions import ConfigurationError
 from omnicli.models import OmniConfig, PipelineConfig, ProviderConfig, StageConfig
 
@@ -53,5 +53,16 @@ def test_unknown_stage_provider_is_rejected() -> None:
             pipeline=PipelineConfig(
                 stages=[StageConfig(name="review", provider="missing", role="Reviewer", instruction="Review")]
             ),
-            providers={"known": ProviderConfig(command="known")},
+        providers={"known": ProviderConfig(command="known")},
         )
+
+
+def test_config_snapshot_redacts_provider_environment() -> None:
+    config = DEFAULT_CONFIG.model_copy(deep=True)
+    config.providers["gemini"].environment = {"API_TOKEN": "secret-value"}
+
+    snapshot = config_snapshot(config)
+
+    assert snapshot["providers"]["gemini"]["environment"] == {"API_TOKEN": "[REDACTED]"}
+    assert "secret-value" not in str(snapshot)
+    assert len(config_fingerprint(config)) == 64

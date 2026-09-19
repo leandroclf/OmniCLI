@@ -58,3 +58,27 @@ def test_capability_probe_reports_missing_marker() -> None:
     )
     with pytest.raises(ProviderError, match="--output-format"):
         SubprocessAdapter("python", config).check_capabilities()
+
+
+def test_output_limit_is_enforced_without_shell_execution() -> None:
+    config = ProviderConfig(
+        command=sys.executable,
+        args=["-c", "print('x' * 2000)", "{prompt}"],
+        max_output_chars=1_000,
+    )
+
+    with pytest.raises(ProviderError, match="max_output_chars"):
+        SubprocessAdapter("python", config).run("prompt", timeout_seconds=5)
+
+
+def test_provider_environment_is_minimal_by_default() -> None:
+    config = ProviderConfig(
+        command=sys.executable,
+        inherit_environment=False,
+        environment_allowlist=[],
+        environment={"PROVIDER_TOKEN": "configured"},
+    )
+
+    environment = SubprocessAdapter("python", config)._environment()
+
+    assert environment == {"PROVIDER_TOKEN": "configured"}

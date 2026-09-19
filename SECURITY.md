@@ -17,4 +17,13 @@ Do not include real secrets or personal data. Maintainers should acknowledge a c
 
 ## Security posture
 
-OmniCLI does not provide a sandbox. Provider CLIs run with the current user's permissions and may send content to external services. The project does not execute generated code or mutate repositories in the current conception workflow. Review the [threat model](docs/threat-model.md) for boundaries and residual risks.
+OmniCLI does not provide a sandbox. Provider CLIs run with the current user's
+permissions and may send content to external services. The default provider
+environment is restricted, input content is hash-only by default, manifests are
+atomic and redacted, and execution is bounded by time, output, step, and call
+limits. These controls reduce risk but do not replace OS isolation or provider
+privacy review.
+
+The project does not execute generated code or mutate repositories in the
+current conception workflow. Review the [production readiness](docs/production-readiness.md)
+and [threat model](docs/threat-model.md) for boundaries and residual risks.

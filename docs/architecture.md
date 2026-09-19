@@ -28,6 +28,11 @@ flowchart TD
 
 O roteamento não é um editor de grafos nem um mecanismo de agentes concorrentes. `--loops` limita passagens, `quality_loop.max_steps` limita etapas, e o manifesto registra o histórico, o melhor score e o motivo de término. O quality gate atual é deliberadamente híbrido: calcula sinais determinísticos de completude e bloqueia marcadores de segurança/contradições críticas explicitamente detectados; não afirma que um documento está correto apenas porque atingiu um número.
 
+Cada execução registra `graph_version`, `config_fingerprint`, `calls_used` e a
+versão do avaliador. O limite `max_calls` complementa `max_steps` para impedir
+consumo ilimitado de quotas quando um provedor falha ou um resultado permanece
+incompleto.
+
 ## Decisões da V1
 
 ### Subprocessos locais

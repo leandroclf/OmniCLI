@@ -12,3 +12,7 @@ class ProviderError(OmniCLIError):
 
 class PipelineError(OmniCLIError):
     """Raised when a pipeline stage fails."""
+
+
+class WorkspaceError(OmniCLIError):
+    """Raised when a workspace is invalid or already locked."""

@@ -2,6 +2,22 @@
 
 All notable changes to this project will be documented in this file. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project intends to follow [Semantic Versioning](https://semver.org/).
 
+## [0.3.0] - 2026-09-19
+
+### Added
+
+- Secure hash-only input retention by default, with validated resume input.
+- Redacted configuration snapshots and configuration fingerprints.
+- Workspace path containment, restrictive permissions, advisory locks, and atomic manifests.
+- Provider environment allowlists, bounded output capture, process-group termination, and call budgets.
+- Deterministic quality evidence and versioned quality reports.
+
+### Security
+
+- Rejected path traversal and absolute run identifiers.
+- Prevented configured environment values from being persisted in manifests.
+- Added regression tests for workspace escape, permissions, secret redaction, output limits, and resume integrity.
+
 ## [Unreleased]
 
 ### Planned
@@ -43,5 +59,6 @@ All notable changes to this project will be documented in this file. The format 
 - Configurable conception pipeline, local subprocess adapter, resumable workspaces, preliminary quality report, tests, CI, and safe bootstrap.
 
 [Unreleased]: https://github.com/leandroclf/OmniCLI/commits/main
+[0.3.0]: https://github.com/leandroclf/OmniCLI/commits/main
 [0.2.0]: https://github.com/leandroclf/OmniCLI/commits/main
 [0.1.0]: https://github.com/leandroclf/OmniCLI/commit/babe5aef2879570d5f888089bd1ce5e29a348dff

@@ -2,7 +2,9 @@ from __future__ import annotations
 
 import os
 import shutil
+import signal
 import subprocess
+import tempfile
 
 from omnicli.adapters.base import ProviderAdapter, ProviderResponse
 from omnicli.exceptions import ProviderError
@@ -32,14 +34,21 @@ class SubprocessAdapter(ProviderAdapter):
         return [self.config.command, *args], None if has_placeholder else prompt
 
     def _environment(self) -> dict[str, str]:
-        environment = os.environ.copy()
+        if self.config.inherit_environment:
+            environment = os.environ.copy()
+        else:
+            environment = {
+                key: os.environ[key]
+                for key in self.config.environment_allowlist
+                if key in os.environ
+            }
         environment.update(self.config.environment)
         return environment
 
     def _ensure_available(self) -> None:
         if not self.config.enabled:
             raise ProviderError(f"Provedor desabilitado: {self.provider_name}")
-        if shutil.which(self.config.command) is None:
+        if shutil.which(self.config.command, path=self._environment().get("PATH")) is None:
             raise ProviderError(
                 f"CLI não encontrada para {self.provider_name}: {self.config.command}. "
                 "Instale-a e autentique-a antes de executar o pipeline."
@@ -96,25 +105,64 @@ class SubprocessAdapter(ProviderAdapter):
     def run(self, prompt: str, timeout_seconds: float) -> ProviderResponse:
         self._ensure_available()
         command, stdin = self.invocation(prompt)
+        stdout_file = tempfile.TemporaryFile(mode="w+b")
+        stderr_file = tempfile.TemporaryFile(mode="w+b")
         try:
-            process = subprocess.run(
+            process = subprocess.Popen(
                 command,
-                input=stdin,
-                capture_output=True,
-                text=True,
-                timeout=timeout_seconds,
-                check=False,
+                stdin=subprocess.PIPE if stdin is not None else subprocess.DEVNULL,
+                stdout=stdout_file,
+                stderr=stderr_file,
                 env=self._environment(),
+                start_new_session=os.name == "posix",
             )
+            try:
+                process.communicate(input=stdin.encode("utf-8") if stdin is not None else None, timeout=timeout_seconds)
+            except subprocess.TimeoutExpired as exc:
+                self._terminate(process)
+                process.communicate()
+                raise ProviderError(f"Timeout ao executar {self.provider_name} após {timeout_seconds:.0f}s") from exc
         except subprocess.TimeoutExpired as exc:
             raise ProviderError(f"Timeout ao executar {self.provider_name} após {timeout_seconds:.0f}s") from exc
         except OSError as exc:
             raise ProviderError(f"Falha ao iniciar {self.provider_name}: {exc}") from exc
-        return ProviderResponse(
-            stdout=process.stdout or "",
-            stderr=process.stderr or "",
-            exit_code=process.returncode,
-        )
+        finally:
+            stdout_file.flush()
+            stderr_file.flush()
+
+        try:
+            stdout_file.seek(0)
+            stderr_file.seek(0)
+            stdout_bytes = stdout_file.read(self.config.max_output_chars + 1)
+            stderr_bytes = stderr_file.read(self.config.max_stderr_chars + 1)
+            if len(stdout_bytes) > self.config.max_output_chars:
+                raise ProviderError(
+                    f"{self.provider_name} excedeu max_output_chars={self.config.max_output_chars}"
+                )
+            if len(stderr_bytes) > self.config.max_stderr_chars:
+                raise ProviderError(
+                    f"{self.provider_name} excedeu max_stderr_chars={self.config.max_stderr_chars}"
+                )
+            return ProviderResponse(
+                stdout=stdout_bytes.decode("utf-8", errors="replace"),
+                stderr=stderr_bytes.decode("utf-8", errors="replace"),
+                exit_code=process.returncode or 0,
+            )
+        finally:
+            stdout_file.close()
+            stderr_file.close()
+
+    @staticmethod
+    def _terminate(process: subprocess.Popen[bytes]) -> None:
+        if process.poll() is not None:
+            return
+        if os.name == "posix":
+            try:
+                os.killpg(process.pid, signal.SIGKILL)
+            except ProcessLookupError:
+                pass
+        else:
+            process.kill()
 
 
 def command_exists(command: str) -> bool:

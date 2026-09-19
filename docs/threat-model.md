@@ -11,8 +11,8 @@ OmniCLI launches locally installed AI CLIs, passes text between stages, and stor
 | User input → provider | Prompt injection, sensitive data disclosure | Inputs are marked as untrusted; prompts forbid role changes, secret disclosure, commands, and external actions |
 | Provider output → next provider | Instruction propagation and poisoned context | Previous output is delimited as data and challenged by critical-review stages |
 | OmniCLI → local process | Command injection or unexpected interactive mode | Argument lists without a shell; explicit `{prompt}` transport; timeouts; documented headless commands |
-| Process → local environment | Credential or file access inherited from the user | No privilege elevation; warning that OmniCLI is not a sandbox; provider environments are explicit additions |
-| Run → workspace | Sensitive prompt/output retention | Prompt content retention disabled by default; isolated run directory; manifest hashes support audit without storing prompt text |
+| Process → local environment | Credential or file access inherited from the user | No privilege elevation; restricted environment allowlist by default; warning that OmniCLI is not a sandbox |
+| Run → workspace | Sensitive prompt/output retention | Input hash-only retention by default; stage prompt content disabled by default; redacted configuration snapshot; isolated run directory; atomic manifest and hashes |
 | Configuration → execution | Malicious executable or environment override | Strict schema and no shell strings; users must review untrusted configuration before execution |
 
 ## Residual risks
@@ -20,6 +20,8 @@ OmniCLI launches locally installed AI CLIs, passes text between stages, and stor
 - Prompt injection defenses are probabilistic and can fail.
 - Provider CLIs may read local context or configuration according to their own behavior.
 - Prompt text passed in process arguments may be observable to same-host process inspection on some systems.
+- Provider CLIs may still access files, network, credentials, or project context according to their own behavior.
+- A configured provider can receive sensitive data intentionally; the environment allowlist does not control provider-side retention.
 - Output can contain malicious commands, links, or code even when the provider was instructed otherwise.
 - Provider services receive content under their own privacy and retention policies.
 
@@ -31,5 +33,6 @@ OmniCLI launches locally installed AI CLIs, passes text between stages, and stor
 - Secret scanning before prompts leave the machine and before patches are applied.
 - Resource limits, network policy, test gates, rollback, and append-only audit events.
 - Red-team cases for indirect prompt injection and malicious repository content.
+- Pinned provider contract tests and a reviewed evaluation benchmark.
 
 Security vulnerabilities should be reported according to [SECURITY.md](../SECURITY.md).

@@ -3,7 +3,7 @@
 [![CI](https://github.com/leandroclf/OmniCLI/actions/workflows/ci.yml/badge.svg)](https://github.com/leandroclf/OmniCLI/actions/workflows/ci.yml)
 [![Python 3.10+](https://img.shields.io/badge/Python-3.10%2B-3776AB.svg)](https://www.python.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![Status: Alpha](https://img.shields.io/badge/status-alpha-orange.svg)](ROADMAP.md)
+[![Status: Controlled Beta](https://img.shields.io/badge/status-controlled%20beta-blue.svg)](docs/production-readiness.md)
 
 **Turn one rough idea into a reviewable engineering proposal by chaining the AI CLIs you already use.**
 
@@ -12,6 +12,8 @@ OmniCLI is a local, configurable orchestrator for authenticated command-line AI 
 > OmniCLI does not promise “free AI.” It does not require its own API keys, but every provider remains subject to its subscription, quota, licensing, privacy, and acceptable-use terms.
 
 [Leia em Português](docs/README.pt-BR.md) · [Interface screenshots](docs/interface.md) · [Architecture](docs/architecture.md) · [Provider compatibility](docs/provider-compatibility.md) · [Research](docs/research/landscape.md) · [Roadmap](ROADMAP.md)
+
+Production criteria: [readiness](docs/production-readiness.md) · [evaluation contract](docs/evaluation.md) · [release process](docs/release.md)
 
 ## Why OmniCLI?
 
@@ -24,7 +26,9 @@ Most agent tools focus on writing code. OmniCLI focuses first on the communicati
 - **Safe by default:** no shell execution, automatic code execution, repository mutation, or prompt persistence by default.
 - **Recoverable runs:** inspect or resume interrupted workflows without discarding completed stages.
 
-OmniCLI is alpha software. Run it on non-sensitive material first and review all model output.
+OmniCLI 0.3 is a controlled beta foundation. The current workflow is suitable for
+technical pilots with reviewed, non-sensitive material. It is not a sandbox and
+does not execute generated code or mutate repositories.
 
 ## 60-second start
 
@@ -73,6 +77,9 @@ omnicli conceive "My idea" --config omnicli.yaml
 omnicli conceive "My idea" --loops 3 --refine --output proposal.md
 omnicli run inspect RUN_ID
 omnicli run resume RUN_ID
+
+# With the secure hash-only input retention default:
+omnicli run resume RUN_ID --idea "The original idea"
 ```
 
 `doctor --capabilities` validates the configuration, required executables, provider versions, and documented help markers without generating content. See [provider compatibility](docs/provider-compatibility.md) for the update policy; a passing probe is not a guarantee that every vendor feature is supported.
@@ -114,17 +121,19 @@ pipeline:
     min_improvement: 3
     stable_passes: 1
     max_steps: 30
+    max_calls: 50
+    stop_on_quality: true
 ```
 
-`min_score` is a completeness signal, not a promise of correctness. Hard gates block automatic acceptance when the output declares unresolved critical contradictions or contains known unsafe instruction markers. Every refined run records `quality_history`, `route_history`, `steps_used`, `passes_completed`, `best_quality_score`, and `termination_reason` in its manifest. A run can end by reaching the threshold, stabilizing, reaching a bound, or remaining blocked; human review is still required.
+`min_score` is a completeness signal, not a promise of correctness. Hard gates block automatic acceptance when the output declares unresolved critical contradictions or contains known unsafe instruction markers. Every refined run records `quality_history`, `route_history`, `steps_used`, `calls_used`, `passes_completed`, `best_quality_score`, `graph_version`, and `termination_reason` in its manifest. A run can end by reaching the threshold, stabilizing, reaching a bound, or remaining blocked; human review is still required.
 
 See [omnicli.example.yaml](omnicli.example.yaml) to customize the stages and providers.
 
 ## Traceability and privacy
 
-Every run creates an isolated workspace with stage outputs and `manifest.json`. The manifest records status, provider version, timestamps, output size, and SHA-256 hashes of prompts and outputs. Full prompt text is not retained unless `retain_prompt_content: true` is explicitly configured.
+Every run creates an isolated workspace with stage outputs and `manifest.json`. The manifest records status, provider version, timestamps, output size, configuration fingerprint, and SHA-256 hashes of input, prompts, and outputs. Input content is not retained by default; `run resume` requires the original idea and validates its hash. Full stage prompt text is not retained unless `retain_prompt_content: true` is explicitly configured. Provider environment values are always redacted in the manifest.
 
-Provider subprocesses still inherit the current user's permissions and environment. OmniCLI is an orchestrator, not a sandbox. Read the [threat model](docs/threat-model.md) and [security policy](SECURITY.md) before using sensitive data.
+Provider subprocesses run with the current user's permissions. The default environment is restricted to a small allowlist and configured values are passed only when explicitly declared. OmniCLI is an orchestrator, not a sandbox. Read the [production readiness](docs/production-readiness.md), [threat model](docs/threat-model.md), and [security policy](SECURITY.md) before using sensitive data.
 
 ## Project direction
 

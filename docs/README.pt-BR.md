@@ -17,10 +17,14 @@ Enquanto muitos agentes priorizam escrever código, o OmniCLI começa pelo probl
 - Não executa shell, código gerado ou alterações em repositórios automaticamente.
 - Permite inspecionar e retomar execuções interrompidas.
 
-O projeto está em fase alpha. Comece com conteúdo não sensível e revise toda saída gerada.
+O projeto está em beta controlado. Use primeiro em pilotos técnicos com conteúdo
+revisado e não sensível; o OmniCLI não é um sandbox.
 
 Veja a [galeria da interface](interface.md) para exemplos visuais dos comandos,
 do diagnóstico e do bootstrap.
+
+Consulte também os critérios de [prontidão para produção](production-readiness.md),
+o [contrato de avaliação](evaluation.md) e o [processo de release](release.md).
 
 ## Instalação recomendada
 
@@ -69,9 +73,14 @@ pipeline:
     min_improvement: 3
     stable_passes: 1
     max_steps: 30
+    max_calls: 50
+    stop_on_quality: true
 ```
 
-O manifesto registra histórico de qualidade, passos consumidos, passagens concluídas e `termination_reason`. O score mede sinais de completude e não garante correção; toda proposta continua exigindo revisão humana.
+O manifesto registra histórico de qualidade, chamadas, passos consumidos,
+passagens concluídas, fingerprint da configuração, versão do grafo e
+`termination_reason`. O score mede sinais de completude e não garante correção;
+toda proposta continua exigindo revisão humana.
 
 ## Diagnóstico
 
@@ -104,7 +113,12 @@ registradas, sem enviar prompts nem instalar provedores.
 
 Cada execução possui workspace isolado e `manifest.json` com status, versão do provedor, horários, tamanho das saídas e hashes SHA-256. O conteúdo integral dos prompts não é persistido por padrão.
 
-As entradas são delimitadas como dados não confiáveis e as etapas recebem instruções para rejeitar tentativas embutidas de trocar papéis, revelar segredos ou executar comandos. Essa medida reduz risco, mas não garante imunidade a prompt injection.
+Por privacidade, a ideia original fica somente como hash por padrão; para retomar
+uma execução, informe novamente a ideia com `omnicli run resume RUN_ID --idea ...`.
+Valores de ambiente são redigidos no manifesto. As entradas são delimitadas como
+dados não confiáveis e as etapas recebem instruções para rejeitar tentativas
+embutidas de trocar papéis, revelar segredos ou executar comandos. Essa medida
+reduz risco, mas não garante imunidade a prompt injection.
 
 Os subprocessos herdam permissões e ambiente do usuário. O OmniCLI não é um sandbox. Consulte o [modelo de ameaças](threat-model.md) e a [política de segurança](../SECURITY.md).
 

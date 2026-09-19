@@ -1,7 +1,10 @@
 from pathlib import Path
 
+import pytest
+
 from omnicli.adapters.base import ProviderAdapter, ProviderResponse
 from omnicli.config import DEFAULT_CONFIG
+from omnicli.exceptions import PipelineError
 from omnicli.models import StageStatus
 from omnicli.pipeline import PipelineRunner
 
@@ -40,6 +43,9 @@ def test_pipeline_creates_final_document_and_artifacts(tmp_path: Path) -> None:
     assert workspace.load_manifest().stages[0].prompt_sha256
     assert workspace.load_manifest().stages[0].output_sha256
     assert workspace.load_manifest().total_loops == 1
+    assert workspace.load_manifest().input_file is None
+    assert workspace.load_manifest().input_sha256
+    assert workspace.load_manifest().calls_used == len(DEFAULT_CONFIG.pipeline.stages)
     assert report.score >= 50
 
 
@@ -60,11 +66,36 @@ def test_pipeline_resume_retries_failed_stage(tmp_path: Path) -> None:
         workspace.run_id,
         output=output,
         workspace_root=tmp_path / "workspace",
+        idea="Aplicativo de meditação",
     )
     assert resumed_output == output
     assert report.passed
     assert workspace.load_manifest().status.value == "completed"
     assert all(result.loop == 1 for result in workspace.load_manifest().stages)
+
+
+def test_resume_rejects_configuration_drift(tmp_path: Path) -> None:
+    adapters = {name: FakeAdapter(name) for name in DEFAULT_CONFIG.providers}
+    runner = PipelineRunner(DEFAULT_CONFIG, adapters)
+    _, workspace, _ = runner.run(
+        "Aplicativo de meditação",
+        loops=1,
+        output=tmp_path / "proposal.md",
+        workspace_root=tmp_path / "workspace",
+    )
+    manifest = workspace.load_manifest()
+    manifest.status = StageStatus.FAILED
+    workspace.save_manifest(manifest)
+
+    changed = DEFAULT_CONFIG.model_copy(deep=True)
+    changed.pipeline.stages[0].instruction += " Validar riscos regulatórios."
+
+    with pytest.raises(PipelineError, match="configuração atual difere"):
+        PipelineRunner(changed, adapters).resume(
+            workspace.run_id,
+            workspace_root=tmp_path / "workspace",
+            idea="Aplicativo de meditação",
+        )
 
 
 class RefiningFakeAdapter(ProviderAdapter):
