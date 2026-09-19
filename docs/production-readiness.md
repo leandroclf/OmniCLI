@@ -6,6 +6,10 @@ OmniCLI 0.4 is a controlled beta foundation for local technical pilots. It is
 not a sandbox, a hosted multi-tenant service, or an autonomous coding agent.
 Generated documents remain untrusted and require human approval.
 
+The complete post-validation execution sequence is documented in the
+[production transition plan](plano-transicao-producao.md). It must be read
+before promoting the tool beyond a controlled beta.
+
 ## Security controls implemented
 
 - Run identifiers are restricted to safe names and remain inside the workspace.

@@ -45,6 +45,21 @@ The roadmap protects OmniCLI's core idea: improve human–AI communication throu
 - [ ] Quality gates backed by public evaluation data.
 - [ ] Complete operational and security documentation.
 
+## Production transition — after provider and human validation
+
+The detailed sequence, evidence requirements and promotion gates are maintained
+in [docs/plano-transicao-producao.md](docs/plano-transicao-producao.md).
+
+- [ ] Complete authenticated provider compatibility matrix.
+- [ ] Complete the human benchmark with versioned cases and rubric.
+- [ ] Run a controlled technical pilot with reviewed, non-sensitive material.
+- [ ] Validate installation, upgrade, rollback, interruption and resource limits.
+- [ ] Finalize retention, privacy, incident response and support runbooks.
+- [ ] Publish SBOM, checksums and reproducible release artifacts.
+- [ ] Approve a production candidate with explicit provider scope.
+- [ ] Publish the first productive release and maintenance policy.
+- [ ] Operate recurring compatibility, security and quality regression reviews.
+
 ## After 1.0 — Controlled implementation
 
 - [ ] Isolated Git worktrees and patch-only changes.

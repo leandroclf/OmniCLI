@@ -24,7 +24,8 @@ Veja a [galeria da interface](interface.md) para exemplos visuais dos comandos,
 do diagnóstico e do bootstrap.
 
 Consulte também os critérios de [prontidão para produção](production-readiness.md),
-o [contrato de avaliação](evaluation.md) e o [processo de release](release.md).
+o [plano de transição para produção](plano-transicao-producao.md), o
+[contrato de avaliação](evaluation.md) e o [processo de release](release.md).
 
 ## Instalação recomendada
 

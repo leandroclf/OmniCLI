@@ -13,7 +13,7 @@ OmniCLI is a local, configurable orchestrator for authenticated command-line AI 
 
 [Leia em Português](docs/README.pt-BR.md) · [Interface screenshots](docs/interface.md) · [Architecture](docs/architecture.md) · [Provider compatibility](docs/provider-compatibility.md) · [Research](docs/research/landscape.md) · [Roadmap](ROADMAP.md)
 
-Production criteria: [readiness](docs/production-readiness.md) · [evaluation contract](docs/evaluation.md) · [release process](docs/release.md)
+Production criteria: [readiness](docs/production-readiness.md) · [production transition plan](docs/plano-transicao-producao.md) · [evaluation contract](docs/evaluation.md) · [release process](docs/release.md)
 
 ## Why OmniCLI?
 

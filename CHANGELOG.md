@@ -50,6 +50,11 @@ All notable changes to this project will be documented in this file. The format 
 
 - Enforced `setuptools>=83.0.0` in development and bootstrap environments after dependency auditing identified a vulnerable older release.
 
+### Documentation
+
+- Added the post-validation production transition plan with phase gates,
+  evidence requirements, pilot criteria and the productive-release checklist.
+
 ## [0.2.0] - 2026-09-19
 
 ### Added
