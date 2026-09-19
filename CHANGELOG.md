@@ -18,6 +18,22 @@ All notable changes to this project will be documented in this file. The format 
 - Prevented configured environment values from being persisted in manifests.
 - Added regression tests for workspace escape, permissions, secret redaction, output limits, and resume integrity.
 
+## [0.4.0] - 2026-09-19
+
+### Added
+
+- Provider-free `conceive --dry-run --json` execution plans.
+- Offline diagnostics with `doctor --offline` and `providers check --offline`.
+- Local provider contract laboratory for transport, capability probes, exits, timeouts and output limits.
+- Deterministic synthetic quality corpus exposed by `omnicli lab evaluate` and `omnicli lab verify`.
+- JSON run inspection and versioned manifest schema validation.
+- Atomic writes for stage artifacts in addition to atomic manifests.
+
+### Validation boundaries
+
+- Offline checks do not authenticate providers or prove vendor compatibility.
+- Synthetic quality evaluation does not replace human review or a human quality benchmark.
+
 ## [Unreleased]
 
 ### Planned
@@ -60,5 +76,6 @@ All notable changes to this project will be documented in this file. The format 
 
 [Unreleased]: https://github.com/leandroclf/OmniCLI/commits/main
 [0.3.0]: https://github.com/leandroclf/OmniCLI/commits/main
+[0.4.0]: https://github.com/leandroclf/OmniCLI/commits/main
 [0.2.0]: https://github.com/leandroclf/OmniCLI/commits/main
 [0.1.0]: https://github.com/leandroclf/OmniCLI/commit/babe5aef2879570d5f888089bd1ce5e29a348dff

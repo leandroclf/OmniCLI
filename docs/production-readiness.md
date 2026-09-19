@@ -2,7 +2,7 @@
 
 ## Current position
 
-OmniCLI 0.3 is a controlled beta foundation for local technical pilots. It is
+OmniCLI 0.4 is a controlled beta foundation for local technical pilots. It is
 not a sandbox, a hosted multi-tenant service, or an autonomous coding agent.
 Generated documents remain untrusted and require human approval.
 
@@ -27,6 +27,8 @@ Generated documents remain untrusted and require human approval.
 - Configure explicit environment variables instead of `inherit_environment`.
 - Establish retention, deletion, incident response, and vulnerability handling procedures.
 - Test provider contracts against pinned versions in an opt-in environment.
+- Run `omnicli lab verify` in every change and release candidate.
+- Run `omnicli doctor --offline` when provider authentication is unavailable.
 - Publish signed release artifacts and a software bill of materials.
 - Maintain a documented rollback path and a human approval checkpoint.
 
@@ -43,10 +45,12 @@ are true:
 6. A representative evaluation set has a reviewed baseline.
 7. The release notes document migration and rollback impact.
 
-## Explicit non-goals for 0.3
+## Explicit non-goals for 0.4
 
 - Arbitrary shell or code execution.
 - Automatic repository mutation.
 - Autonomous tool selection or unbounded agent loops.
 - Parallel execution solely for speed.
 - Hosted storage of prompts or provider credentials.
+- Treating synthetic provider contracts as vendor compatibility evidence.
+- Treating the synthetic quality corpus as a human benchmark.

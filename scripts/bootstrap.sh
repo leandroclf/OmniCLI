@@ -192,6 +192,9 @@ if [[ "$RUN_CHECKS" = true ]]; then
   (
     cd "$ROOT_DIR"
     "$VENV_PYTHON" -m pytest --cov=omnicli --cov-report=term-missing
+    "$VENV_PYTHON" -m omnicli lab verify --json
+    "$VENV_PYTHON" -m omnicli conceive "offline bootstrap validation" --dry-run --json
+    "$VENV_PYTHON" -m omnicli doctor --offline --config "$CONFIG_PATH" --json
     "$VENV_PYTHON" -m ruff check .
     "$VENV_PYTHON" -m mypy
     "$VENV_PYTHON" -m pip_audit

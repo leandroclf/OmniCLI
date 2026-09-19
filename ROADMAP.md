@@ -24,8 +24,10 @@ The roadmap protects OmniCLI's core idea: improve human–AI communication throu
 ## 0.4 — Pipeline packs and evaluations
 
 - [ ] Versioned packs for idea-to-RFC, architecture review, threat modeling, and ADR review.
-- [ ] Stable schemas for stage inputs and outputs.
-- [ ] Deterministic fixtures and rubric-based evaluation reports.
+- [x] Versioned manifest schema with forward-version rejection.
+- [x] Deterministic provider contract fixtures and synthetic quality evaluation.
+- [x] Provider-free planning, offline diagnostics and JSON run inspection.
+- [x] Atomic stage artifacts and bounded subprocess failure laboratory.
 - [ ] Run metrics for latency, failures, retries, and context growth.
 - [ ] Compatibility matrix generated from opt-in provider contract tests across pinned provider versions.
 

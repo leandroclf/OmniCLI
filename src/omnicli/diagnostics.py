@@ -28,10 +28,12 @@ class ProviderDiagnostic:
 class DoctorReport:
     ready: bool
     providers: tuple[ProviderDiagnostic, ...]
+    mode: str = "live"
 
     def as_dict(self) -> dict[str, object]:
         return {
             "ready": self.ready,
+            "mode": self.mode,
             "providers": [provider.as_dict() for provider in self.providers],
         }
 
@@ -40,6 +42,7 @@ def diagnose(
     config: OmniConfig,
     check_versions: bool = True,
     check_capabilities: bool = False,
+    offline: bool = False,
 ) -> DoctorReport:
     required = {stage.provider for stage in config.pipeline.stages}
     diagnostics: list[ProviderDiagnostic] = []
@@ -55,6 +58,9 @@ def diagnose(
         if not provider.enabled:
             status = "disabled"
             detail = "provedor desabilitado"
+        elif offline:
+            status = "not_checked"
+            detail = "verificação offline; executável e autenticação não foram testados"
         elif not command_exists(provider.command):
             status = "missing"
             detail = "comando não encontrado no PATH"
@@ -72,7 +78,7 @@ def diagnose(
                 status = "error"
                 capability_status = str(exc)
 
-        if is_required and status != "ready":
+        if is_required and status != "ready" and not offline:
             ready = False
         diagnostics.append(
             ProviderDiagnostic(
@@ -89,4 +95,4 @@ def diagnose(
             )
         )
 
-    return DoctorReport(ready=ready, providers=tuple(diagnostics))
+    return DoctorReport(ready=ready, providers=tuple(diagnostics), mode="offline" if offline else "live")

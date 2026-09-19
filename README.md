@@ -26,7 +26,7 @@ Most agent tools focus on writing code. OmniCLI focuses first on the communicati
 - **Safe by default:** no shell execution, automatic code execution, repository mutation, or prompt persistence by default.
 - **Recoverable runs:** inspect or resume interrupted workflows without discarding completed stages.
 
-OmniCLI 0.3 is a controlled beta foundation. The current workflow is suitable for
+OmniCLI 0.4 is a controlled beta foundation. The current workflow is suitable for
 technical pilots with reviewed, non-sensitive material. It is not a sandbox and
 does not execute generated code or mutate repositories.
 
@@ -71,11 +71,14 @@ OmniCLI 0.2 uses each provider's documented headless interface instead of assumi
 
 ```bash
 omnicli doctor [--json] [--skip-version] [--capabilities]
+omnicli doctor --offline --json
 omnicli providers check [--capabilities]
+omnicli lab verify [--json]
 omnicli init omnicli.yaml
 omnicli conceive "My idea" --config omnicli.yaml
+omnicli conceive "My idea" --dry-run --json
 omnicli conceive "My idea" --loops 3 --refine --output proposal.md
-omnicli run inspect RUN_ID
+omnicli run inspect RUN_ID [--json]
 omnicli run resume RUN_ID
 
 # With the secure hash-only input retention default:
@@ -83,6 +86,8 @@ omnicli run resume RUN_ID --idea "The original idea"
 ```
 
 `doctor --capabilities` validates the configuration, required executables, provider versions, and documented help markers without generating content. See [provider compatibility](docs/provider-compatibility.md) for the update policy; a passing probe is not a guarantee that every vendor feature is supported.
+
+When provider authentication is unavailable, use `doctor --offline` for configuration-only validation and `omnicli lab verify` for deterministic local transport, failure-boundary and quality-regression checks. These commands explicitly do not claim authenticated-provider compatibility or human-evaluated quality.
 
 ## Pipeline model
 
@@ -128,6 +133,18 @@ pipeline:
 `min_score` is a completeness signal, not a promise of correctness. Hard gates block automatic acceptance when the output declares unresolved critical contradictions or contains known unsafe instruction markers. Every refined run records `quality_history`, `route_history`, `steps_used`, `calls_used`, `passes_completed`, `best_quality_score`, `graph_version`, and `termination_reason` in its manifest. A run can end by reaching the threshold, stabilizing, reaching a bound, or remaining blocked; human review is still required.
 
 See [omnicli.example.yaml](omnicli.example.yaml) to customize the stages and providers.
+
+### Offline verification
+
+`conceive --dry-run` validates the pipeline shape, bounds, retention policy and configuration fingerprint without executing a provider or creating a workspace. The local laboratory can be run independently:
+
+```bash
+omnicli lab providers
+omnicli lab evaluate
+omnicli lab verify --json
+```
+
+The laboratory uses local synthetic processes. It validates OmniCLI's own subprocess contract, not vendor behavior, model quality, authentication, quotas or billing.
 
 ## Traceability and privacy
 

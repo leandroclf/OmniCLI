@@ -14,6 +14,8 @@ from uuid import uuid4
 from omnicli.exceptions import WorkspaceError
 from omnicli.models import RunManifest, StageResult
 
+MANIFEST_SCHEMA_VERSION = 1
+
 
 def safe_run_id() -> str:
     timestamp = datetime.now(timezone.utc).strftime("%Y%m%d-%H%M%S")
@@ -56,6 +58,7 @@ class Workspace:
             handle.truncate()
             handle.write(f"pid={os.getpid()}\n")
             handle.flush()
+            os.fchmod(handle.fileno(), 0o600)
             yield
         finally:
             with contextlib.suppress(OSError):
@@ -77,9 +80,23 @@ class Workspace:
             raise ValueError("nome de artefato vazio")
         target = self._safe_child(safe_name)
         with self.lock():
-            target.write_text(content, encoding="utf-8")
-            target.chmod(0o600)
+            self._atomic_child_write(target, content)
         return target
+
+    @staticmethod
+    def _atomic_child_write(target: Path, content: str) -> None:
+        fd, temporary_name = tempfile.mkstemp(prefix=f".{target.name}-", suffix=".tmp", dir=target.parent)
+        try:
+            with os.fdopen(fd, "w", encoding="utf-8") as temporary:
+                temporary.write(content)
+                temporary.flush()
+                os.fsync(temporary.fileno())
+            os.chmod(temporary_name, 0o600)
+            os.replace(temporary_name, target)
+        except Exception:
+            with contextlib.suppress(FileNotFoundError):
+                os.unlink(temporary_name)
+            raise
 
     def save_manifest(self, manifest: RunManifest) -> None:
         manifest.updated_at = datetime.now(timezone.utc)
@@ -99,7 +116,21 @@ class Workspace:
                 raise
 
     def load_manifest(self) -> RunManifest:
-        return RunManifest.model_validate_json(self.manifest_path.read_text(encoding="utf-8"))
+        try:
+            payload = json.loads(self.manifest_path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError) as exc:
+            raise WorkspaceError(f"Manifesto inválido ou ilegível para a execução {self.run_id}") from exc
+        schema_version = payload.get("schema_version", 1)
+        if schema_version > MANIFEST_SCHEMA_VERSION:
+            raise WorkspaceError(
+                f"Manifesto schema_version={schema_version} não é suportado; "
+                f"máximo suportado={MANIFEST_SCHEMA_VERSION}"
+            )
+        payload.setdefault("schema_version", 1)
+        try:
+            return RunManifest.model_validate(payload)
+        except ValueError as exc:
+            raise WorkspaceError(f"Manifesto inválido para a execução {self.run_id}: {exc}") from exc
 
     def read_text(self, name: str) -> str:
         return self._safe_child(name).read_text(encoding="utf-8")

@@ -15,6 +15,7 @@ def test_workspace_writes_and_loads_manifest(tmp_path: Path) -> None:
     loaded = workspace.load_manifest()
     assert loaded.run_id == "run-test"
     assert loaded.status == StageStatus.RUNNING
+    assert loaded.schema_version == 1
 
 
 def test_workspace_rejects_path_traversal_run_ids(tmp_path: Path) -> None:
@@ -44,3 +45,11 @@ def test_workspace_lock_rejects_concurrent_writer(tmp_path: Path) -> None:
         with pytest.raises(WorkspaceError, match="já está em uso"):
             with other_handle.lock():
                 pass
+
+
+def test_workspace_rejects_future_manifest_schema(tmp_path: Path) -> None:
+    workspace = Workspace(tmp_path, run_id="run-future")
+    workspace.manifest_path.write_text('{"schema_version": 99, "run_id": "run-future"}', encoding="utf-8")
+
+    with pytest.raises(WorkspaceError, match="schema_version=99"):
+        workspace.load_manifest()

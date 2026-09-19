@@ -82,12 +82,27 @@ passagens concluídas, fingerprint da configuração, versão do grafo e
 `termination_reason`. O score mede sinais de completude e não garante correção;
 toda proposta continua exigindo revisão humana.
 
+### Verificação offline
+
+Quando não for possível autenticar as CLIs, use:
+
+```bash
+omnicli conceive "Minha ideia" --dry-run --json
+omnicli doctor --offline --json
+omnicli lab verify --json
+```
+
+Esses comandos validam o plano, o transporte local, limites e regressões
+sintéticas. Não comprovam compatibilidade com fornecedores nem substituem
+benchmark humano.
+
 ## Diagnóstico
 
 ```bash
 omnicli doctor --capabilities
 omnicli doctor --capabilities --json
 omnicli providers check --capabilities
+omnicli providers check --offline
 ```
 
 `doctor --capabilities` valida a configuração, executáveis obrigatórios, versões

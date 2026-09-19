@@ -13,7 +13,7 @@ omnicli --help
 
 ![Ajuda principal do OmniCLI](assets/screenshots/omnicli-help.png)
 
-O ponto de entrada é `conceive`. Os comandos `doctor`, `providers`, `run` e
+O ponto de entrada é `conceive`. Os comandos `doctor`, `providers`, `run`, `lab` e
 `init` apoiam configuração, diagnóstico e operação sem misturar essas
 responsabilidades com a geração da proposta.
 
@@ -38,6 +38,8 @@ gate determinístico e o roteamento condicional documentados em
 
 ```bash
 omnicli doctor --capabilities --json
+omnicli doctor --offline --json
+omnicli lab verify --json
 ```
 
 ![Diagnóstico JSON do OmniCLI](assets/screenshots/omnicli-doctor.png)
@@ -51,6 +53,10 @@ obrigatórios devem aparecer como `ready`.
 Essa verificação não envia prompts, não inicia sessões e não consome quota. Para
 entender os contratos por provedor, consulte
 [`provider-compatibility.md`](provider-compatibility.md).
+
+Quando não há autenticação disponível, `conceive --dry-run --json` valida o
+plano sem executar provedores, e `lab verify` executa contratos sintéticos
+locais. Esses resultados não comprovam compatibilidade real ou qualidade humana.
 
 ## 4. Bootstrap seguro
 

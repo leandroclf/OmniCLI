@@ -24,6 +24,9 @@ jobs:
       - run: python -m pip install -e '.[dev]'
       - run: bash -n scripts/bootstrap.sh
       - run: bash scripts/bootstrap.sh
+      - run: python -m omnicli lab verify --json
+      - run: python -m omnicli conceive "offline CI validation" --dry-run --json
+      - run: python -m omnicli doctor --offline --json
       - run: ruff check .
       - run: pytest --cov=omnicli --cov-report=term-missing
       - run: mypy

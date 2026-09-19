@@ -149,6 +149,7 @@ class StageResult(BaseModel):
 
 
 class RunManifest(BaseModel):
+    schema_version: int = Field(default=1, ge=1, le=100)
     run_id: str
     created_at: datetime = Field(default_factory=utc_now)
     updated_at: datetime = Field(default_factory=utc_now)

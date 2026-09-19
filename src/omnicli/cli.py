@@ -13,13 +13,17 @@ from omnicli.adapters.subprocess import SubprocessAdapter
 from omnicli.config import load_config, write_example_config
 from omnicli.diagnostics import diagnose
 from omnicli.exceptions import OmniCLIError
+from omnicli.lab import LabResult, run_provider_contract_lab, run_synthetic_evaluation
 from omnicli.pipeline import PipelineRunner
+from omnicli.planning import build_execution_plan
 
 app = typer.Typer(help="Orquestrador local de ferramentas de IA via CLI.")
 providers_app = typer.Typer(help="Diagnóstico dos provedores configurados.")
 run_app = typer.Typer(help="Inspeção e retomada de execuções.")
+lab_app = typer.Typer(help="Verificações determinísticas sem autenticação de provedores.")
 app.add_typer(providers_app, name="providers")
 app.add_typer(run_app, name="run")
+app.add_typer(lab_app, name="lab")
 console = Console()
 
 
@@ -39,6 +43,16 @@ def conceive(
     workspace: Path | None = typer.Option(None, "--workspace", help="Diretório para artefatos."),
     verbose: bool = typer.Option(False, "--verbose", "-v", help="Exibe detalhes da execução."),
     preview: bool = typer.Option(False, "--preview", help="Exibe o documento final no terminal."),
+    dry_run: bool = typer.Option(
+        False,
+        "--dry-run",
+        help="Valida a configuração e exibe o plano sem executar CLIs ou criar artefatos.",
+    ),
+    output_json: bool = typer.Option(
+        False,
+        "--json",
+        help="Emite o plano em JSON; aplicável ao modo --dry-run.",
+    ),
     refine: bool = typer.Option(
         False,
         "--refine",
@@ -47,6 +61,18 @@ def conceive(
 ) -> None:
     """Transforma uma ideia em uma proposta arquitetural consolidada."""
     try:
+        loaded = load_config(config)
+        if dry_run:
+            plan = build_execution_plan(loaded, idea, loops, refine=True if refine else None)
+            if output_json:
+                console.print_json(json.dumps(plan, ensure_ascii=False))
+            else:
+                console.print("[cyan]Plano offline; nenhum provedor será executado.[/cyan]")
+                table = Table("Campo", "Valor")
+                for key, value in plan.items():
+                    table.add_row(key, ", ".join(value) if isinstance(value, list) else str(value))
+                console.print(table)
+            return
         runner = _runner(config, verbose)
         final_path, run_workspace, report = runner.run(
             idea=idea,
@@ -78,6 +104,11 @@ def providers_check(
         "--capabilities",
         help="Também verifica marcadores documentados na saída de ajuda da CLI.",
     ),
+    offline: bool = typer.Option(
+        False,
+        "--offline",
+        help="Valida apenas a configuração; não consulta executáveis, versões ou autenticação.",
+    ),
 ) -> None:
     """Verifica quais CLIs estão instaladas e respondendo."""
     try:
@@ -85,7 +116,7 @@ def providers_check(
     except (OmniCLIError, ValueError) as exc:
         console.print(f"[red]Erro:[/red] {exc}")
         raise typer.Exit(code=1) from exc
-    report = diagnose(loaded, check_versions=True, check_capabilities=capabilities)
+    report = diagnose(loaded, check_versions=True, check_capabilities=capabilities, offline=offline)
     table = Table("Provedor", "Comando", "Disponível", "Versão/diagnóstico", "Contrato")
     for provider in report.providers:
         table.add_row(
@@ -110,6 +141,11 @@ def doctor(
         "--capabilities",
         help="Verifica a superfície de ajuda e o contrato declarado de cada CLI.",
     ),
+    offline: bool = typer.Option(
+        False,
+        "--offline",
+        help="Valida apenas a configuração; não consulta executáveis, versões ou autenticação.",
+    ),
 ) -> None:
     """Valida configuração, transporte de prompts e CLIs exigidas pelo pipeline."""
     try:
@@ -117,6 +153,7 @@ def doctor(
             load_config(config),
             check_versions=not skip_version,
             check_capabilities=capabilities,
+            offline=offline,
         )
     except OmniCLIError as exc:
         if output_json:
@@ -140,7 +177,10 @@ def doctor(
             )
         console.print(table)
         if report.ready:
-            console.print("[green]Ambiente pronto para o pipeline configurado.[/green]")
+            if report.mode == "offline":
+                console.print("[green]Configuração válida; prontidão real dos provedores não foi testada.[/green]")
+            else:
+                console.print("[green]Ambiente pronto para o pipeline configurado.[/green]")
         else:
             console.print("[red]Ambiente ainda não está pronto.[/red]")
     if not report.ready:
@@ -199,6 +239,7 @@ def inspect_run(
     run_id: str = typer.Argument(..., help="Identificador da execução no workspace."),
     config: Path | None = typer.Option(None, "--config", "-c", help="Arquivo YAML de configuração."),
     workspace: Path | None = typer.Option(None, "--workspace", help="Diretório dos artefatos."),
+    output_json: bool = typer.Option(False, "--json", help="Emite o manifesto estruturado em JSON."),
 ) -> None:
     """Exibe o manifesto de uma execução."""
     try:
@@ -210,6 +251,12 @@ def inspect_run(
     except (OmniCLIError, OSError, ValueError) as exc:
         console.print(f"[red]Erro:[/red] {exc}")
         raise typer.Exit(code=1) from exc
+    if output_json:
+        payload = manifest.model_dump(mode="json")
+        payload["workspace"] = str(Workspace(root, run_id=run_id).path)
+        console.print_json(json.dumps(payload, ensure_ascii=False))
+        return
+
     table = Table("Loop", "Etapa", "Provedor", "Status", "Saída")
     for result in manifest.stages:
         table.add_row(
@@ -234,6 +281,82 @@ def inspect_run(
             f"término={manifest.termination_reason.value if manifest.termination_reason else '-'}"
         )
     console.print(table)
+
+
+def _print_lab_results(title: str, results: tuple[LabResult, ...]) -> bool:
+    table = Table("Caso", "Status", "Detalhe")
+    passed = True
+    for case in results:
+        ok = case.passed
+        table.add_row(case.name, "PASS" if ok else "FAIL", case.detail)
+        passed = passed and ok
+    console.print(f"[bold]{title}[/bold]")
+    console.print(table)
+    return passed
+
+
+@lab_app.command("providers")
+def lab_providers(
+    output_json: bool = typer.Option(False, "--json", help="Emite o resultado estruturado em JSON."),
+) -> None:
+    """Valida transporte e limites com um provedor sintético local."""
+    results = run_provider_contract_lab()
+    if output_json:
+        payload = {
+            "passed": all(result.passed for result in results),
+            "results": [result.as_dict() for result in results],
+        }
+        console.print_json(json.dumps(payload, ensure_ascii=False))
+    elif not _print_lab_results("Laboratório de contratos de provedores", results):
+        raise typer.Exit(code=1)
+    if not all(result.passed for result in results):
+        raise typer.Exit(code=1)
+
+
+@lab_app.command("evaluate")
+def lab_evaluate(
+    output_json: bool = typer.Option(False, "--json", help="Emite o resultado estruturado em JSON."),
+) -> None:
+    """Executa a regressão sintética do avaliador quality-v1."""
+    results = run_synthetic_evaluation()
+    if output_json:
+        payload = {
+            "passed": all(result.passed for result in results),
+            "results": [result.as_dict() for result in results],
+        }
+        console.print_json(json.dumps(payload, ensure_ascii=False))
+    elif not _print_lab_results("Regressão sintética de qualidade", results):
+        raise typer.Exit(code=1)
+    if not all(result.passed for result in results):
+        raise typer.Exit(code=1)
+
+
+@lab_app.command("verify")
+def lab_verify(
+    output_json: bool = typer.Option(False, "--json", help="Emite o resultado estruturado em JSON."),
+) -> None:
+    """Executa todas as verificações locais que não exigem autenticação."""
+    provider_results = run_provider_contract_lab()
+    evaluation_results = run_synthetic_evaluation()
+    result = {
+        "provider_contracts": [item.as_dict() for item in provider_results],
+        "synthetic_evaluation": [item.as_dict() for item in evaluation_results],
+        "passed": all(item.passed for item in provider_results + evaluation_results),
+        "authenticated_provider_compatibility": "not-tested",
+        "human_quality_benchmark": "not-tested",
+    }
+    if output_json:
+        console.print_json(json.dumps(result, ensure_ascii=False))
+    else:
+        providers_ok = _print_lab_results("Laboratório de contratos de provedores", provider_results)
+        evaluation_ok = _print_lab_results("Regressão sintética de qualidade", evaluation_results)
+        console.print(
+            "Compatibilidade autenticada: não testada | Benchmark humano: não testado"
+        )
+        if not (providers_ok and evaluation_ok):
+            raise typer.Exit(code=1)
+    if not bool(result["passed"]):
+        raise typer.Exit(code=1)
 
 
 @app.command()
