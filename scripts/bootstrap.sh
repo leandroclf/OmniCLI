@@ -173,7 +173,7 @@ fi
 
 VENV_PYTHON="$VENV_DIR/bin/python"
 log "atualizando o instalador do ambiente virtual"
-PIP_DISABLE_PIP_VERSION_CHECK=1 "$VENV_PYTHON" -m pip install --upgrade pip
+PIP_DISABLE_PIP_VERSION_CHECK=1 "$VENV_PYTHON" -m pip install --upgrade pip setuptools
 log "instalando OmniCLI e dependências de desenvolvimento"
 (
   cd "$ROOT_DIR"

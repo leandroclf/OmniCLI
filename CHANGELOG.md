@@ -46,6 +46,10 @@ All notable changes to this project will be documented in this file. The format 
 - Deterministic quality-gate signals, best-result preservation, and explicit termination reasons in run manifests.
 - Official provider compatibility registry, safe help-surface capability probes, and optional bootstrap URL checks.
 
+### Security
+
+- Enforced `setuptools>=83.0.0` in development and bootstrap environments after dependency auditing identified a vulnerable older release.
+
 ## [0.2.0] - 2026-09-19
 
 ### Added
