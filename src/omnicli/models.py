@@ -20,6 +20,16 @@ class StageStatus(str, Enum):
     SKIPPED = "skipped"
 
 
+class TerminationReason(str, Enum):
+    QUALITY_THRESHOLD = "quality_threshold"
+    STABLE_RESULT = "stable_result"
+    MAX_PASSES = "max_passes"
+    MAX_STEPS = "max_steps"
+    QUALITY_GATE_BLOCKED = "quality_gate_blocked"
+    COMPLETED = "completed"
+    FAILED = "failed"
+
+
 class StageConfig(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
@@ -31,6 +41,18 @@ class StageConfig(BaseModel):
     max_retries: int = Field(default=1, ge=0, le=5)
 
 
+class QualityLoopConfig(BaseModel):
+    """Bounded, opt-in routing after a proposal quality check."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    enabled: bool = False
+    min_score: int = Field(default=80, ge=0, le=100)
+    min_improvement: int = Field(default=3, ge=0, le=100)
+    stable_passes: int = Field(default=1, ge=1, le=5)
+    max_steps: int = Field(default=30, ge=1, le=100)
+
+
 class PipelineConfig(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
@@ -40,6 +62,7 @@ class PipelineConfig(BaseModel):
     workspace: Path = Path(".omnicli_workspace")
     output: Path = Path("proposta.md")
     retain_prompt_content: bool = False
+    quality_loop: QualityLoopConfig = Field(default_factory=QualityLoopConfig)
 
     @field_validator("stages")
     @classmethod
@@ -114,3 +137,19 @@ class RunManifest(BaseModel):
     total_loops: int = Field(default=1, ge=1, le=10)
     stages: list[StageResult] = Field(default_factory=list)
     config_snapshot: dict[str, Any] = Field(default_factory=dict)
+    execution_mode: str = "legacy"
+    current_stage: str | None = None
+    next_stage: str | None = None
+    steps_used: int = Field(default=0, ge=0)
+    passes_completed: int = Field(default=0, ge=0)
+    quality_score: int | None = Field(default=None, ge=0, le=100)
+    best_quality_score: int | None = Field(default=None, ge=0, le=100)
+    quality_delta: int | None = None
+    quality_history: list[int] = Field(default_factory=list)
+    route_history: list[str] = Field(default_factory=list)
+    quality_warnings: list[str] = Field(default_factory=list)
+    quality_missing_concepts: list[str] = Field(default_factory=list)
+    quality_security_violations: list[str] = Field(default_factory=list)
+    quality_critical_contradictions: list[str] = Field(default_factory=list)
+    best_output_file: str | None = None
+    termination_reason: TerminationReason | None = None

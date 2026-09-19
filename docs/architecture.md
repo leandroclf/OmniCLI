@@ -13,6 +13,21 @@ flowchart TD
     P --> O["Proposta revisável"]
 ```
 
+## Loop condicional (opt-in)
+
+O modo legado continua sendo uma sequência completa repetida. O modo `--refine` adiciona apenas um roteador pequeno e limitado ao final da esteira:
+
+```mermaid
+flowchart TD
+    M["Proposta Mestra"] --> Q["Quality gate determinístico"]
+    Q -->|"atinge limiar"| F["Finalizar melhor resultado"]
+    Q -->|"faltam riscos/decisões"| R["Revisão crítica"]
+    Q -->|"faltam escopo"| D["Descoberta"]
+    Q -->|"limite atingido"| F
+```
+
+O roteamento não é um editor de grafos nem um mecanismo de agentes concorrentes. `--loops` limita passagens, `quality_loop.max_steps` limita etapas, e o manifesto registra o histórico, o melhor score e o motivo de término. O quality gate atual é deliberadamente híbrido: calcula sinais determinísticos de completude e bloqueia marcadores de segurança/contradições críticas explicitamente detectados; não afirma que um documento está correto apenas porque atingiu um número.
+
 ## Decisões da V1
 
 ### Subprocessos locais
@@ -34,7 +49,7 @@ Os defaults usam as interfaces headless documentadas: `gemini -p`, `claude -p` e
 
 ### Contexto entre etapas
 
-Cada etapa recebe a ideia original e a saída da etapa anterior. O prompt orienta crítica e expansão, evitando concordância automática. As entradas são delimitadas como dados não confiáveis para reduzir propagação de prompt injection. Em ciclos adicionais, o último resultado retorna ao início do pipeline.
+Cada etapa recebe a ideia original e a saída da etapa anterior. O prompt orienta crítica e expansão, evitando concordância automática. As entradas são delimitadas como dados não confiáveis para reduzir propagação de prompt injection. Em ciclos legados adicionais, o último resultado retorna ao início do pipeline. No modo de refinamento, a saída da proposta mestra é avaliada e o retorno pode ser direcionado a uma etapa específica, preservando o contexto e evitando trabalho redundante.
 
 ### Persistência
 
@@ -61,4 +76,4 @@ Cada etapa define:
 
 O modo de implementação deverá gerar alterações em workspace temporário, apresentar diff e aguardar aprovação antes de aplicar qualquer mudança. Autocorreção deverá seguir o mesmo modelo: diagnóstico, patch, testes e aprovação.
 
-O roadmap atual prioriza contratos de compatibilidade, pipeline packs e avaliações antes de ampliar autonomia. Veja [ROADMAP.md](../ROADMAP.md).
+O roadmap atual prioriza contratos de compatibilidade, pipeline packs e avaliações antes de ampliar autonomia. Veja [ROADMAP.md](../ROADMAP.md). O loop condicional não executa código, não altera repositórios e não substitui aprovação humana.

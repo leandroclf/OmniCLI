@@ -70,6 +70,7 @@ omnicli doctor [--json] [--skip-version]
 omnicli providers check
 omnicli init omnicli.yaml
 omnicli conceive "My idea" --config omnicli.yaml
+omnicli conceive "My idea" --loops 3 --refine --output proposal.md
 omnicli run inspect RUN_ID
 omnicli run resume RUN_ID
 ```
@@ -89,6 +90,33 @@ The default pipeline is deliberately sequential:
 Each stage receives the original idea and the previous result. Inputs are delimited as untrusted data, and every prompt instructs the provider not to follow embedded attempts to change roles, reveal secrets, or execute commands. This is defense in depth—not a guarantee against prompt injection.
 
 The default prompts preserve the predominant language of the original idea, and the quality check recognizes Portuguese and English proposal sections.
+
+### Optional quality-driven refinement
+
+The default behavior of `--loops` remains compatible: each loop runs the complete pipeline. Add `--refine` to turn `--loops` into a maximum number of proposal passes. After each `master-proposal`, OmniCLI runs a deterministic quality gate and routes only the needed suffix of the pipeline—for example, back to `critical-review` when risks or decisions are missing. It does not use another LLM as an opaque judge.
+
+```bash
+omnicli conceive \
+  "A gamified meditation app with RPG progression" \
+  --loops 3 \
+  --refine \
+  --output architecture-proposal.md \
+  --verbose
+```
+
+The quality loop is also configurable in YAML:
+
+```yaml
+pipeline:
+  quality_loop:
+    enabled: false
+    min_score: 80
+    min_improvement: 3
+    stable_passes: 1
+    max_steps: 30
+```
+
+`min_score` is a completeness signal, not a promise of correctness. Hard gates block automatic acceptance when the output declares unresolved critical contradictions or contains known unsafe instruction markers. Every refined run records `quality_history`, `route_history`, `steps_used`, `passes_completed`, `best_quality_score`, and `termination_reason` in its manifest. A run can end by reaching the threshold, stabilizing, reaching a bound, or remaining blocked; human review is still required.
 
 See [omnicli.example.yaml](omnicli.example.yaml) to customize the stages and providers.
 

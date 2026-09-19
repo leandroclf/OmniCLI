@@ -4,6 +4,12 @@ pipeline:
   workspace: .omnicli_workspace
   output: proposta.md
   retain_prompt_content: false
+  quality_loop:
+    enabled: false
+    min_score: 80
+    min_improvement: 3
+    stable_passes: 1
+    max_steps: 30
   stages:
     - name: discovery
       provider: gemini

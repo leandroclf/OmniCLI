@@ -3,17 +3,44 @@ from __future__ import annotations
 import hashlib
 import time
 from collections.abc import Callable, Mapping
+from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
 
 from omnicli.adapters.base import ProviderAdapter
 from omnicli.exceptions import PipelineError, ProviderError
-from omnicli.models import OmniConfig, RunManifest, StageResult, StageStatus
+from omnicli.models import (
+    OmniConfig,
+    QualityLoopConfig,
+    RunManifest,
+    StageResult,
+    StageStatus,
+    TerminationReason,
+)
 from omnicli.prompts import build_stage_prompt
 from omnicli.quality import QualityReport, assess_document
 from omnicli.workspace import Workspace
 
 LogFn = Callable[[str], None]
+
+
+@dataclass(frozen=True)
+class RefinementSettings:
+    enabled: bool
+    min_score: int
+    min_improvement: int
+    stable_passes: int
+    max_steps: int
+
+    @classmethod
+    def from_config(cls, config: QualityLoopConfig, enabled: bool | None = None) -> RefinementSettings:
+        return cls(
+            enabled=config.enabled if enabled is None else enabled,
+            min_score=config.min_score,
+            min_improvement=config.min_improvement,
+            stable_passes=config.stable_passes,
+            max_steps=config.max_steps,
+        )
 
 
 class PipelineRunner:
@@ -94,6 +121,142 @@ class PipelineRunner:
         workspace.add_result(manifest, result)
         raise PipelineError(f"Etapa {stage.name} falhou: {result.error}")
 
+    def _record_quality(
+        self,
+        workspace: Workspace,
+        manifest: RunManifest,
+        report: QualityReport,
+        output: str,
+    ) -> tuple[str, int]:
+        previous_score = manifest.quality_score
+        delta = report.score - previous_score if previous_score is not None else report.score
+        manifest.quality_score = report.score
+        manifest.quality_delta = delta
+        manifest.quality_history.append(report.score)
+        manifest.quality_warnings = list(report.warnings)
+        manifest.quality_missing_concepts = list(report.missing_concepts)
+        manifest.quality_security_violations = list(report.security_violations)
+        manifest.quality_critical_contradictions = list(report.critical_contradictions)
+        last_result = manifest.stages[-1] if manifest.stages else None
+        output_file = last_result.output_file if last_result else None
+        if manifest.best_quality_score is None or report.score >= manifest.best_quality_score:
+            manifest.best_quality_score = report.score
+            manifest.best_output_file = output_file
+            best_output = output
+        elif manifest.best_output_file:
+            best_output = workspace.read_text(manifest.best_output_file)
+        else:
+            best_output = output
+        return best_output, delta
+
+    def _write_final(
+        self,
+        workspace: Workspace,
+        manifest: RunManifest,
+        content: str,
+        output: Path | None,
+        report: QualityReport,
+    ) -> tuple[Path, Workspace, QualityReport]:
+        if not content.strip():
+            raise PipelineError("O pipeline terminou sem produzir uma proposta")
+        final_path = output or self.config.pipeline.output
+        final_path.parent.mkdir(parents=True, exist_ok=True)
+        final_path.write_text(content.rstrip() + "\n", encoding="utf-8")
+        manifest.final_output = str(final_path)
+        manifest.quality_score = report.score
+        manifest.quality_warnings = list(report.warnings)
+        manifest.quality_missing_concepts = list(report.missing_concepts)
+        manifest.quality_security_violations = list(report.security_violations)
+        manifest.quality_critical_contradictions = list(report.critical_contradictions)
+        manifest.current_stage = None
+        manifest.next_stage = None
+        manifest.status = StageStatus.COMPLETED
+        workspace.save_manifest(manifest)
+        return final_path, workspace, report
+
+    def _run_refinement(
+        self,
+        workspace: Workspace,
+        manifest: RunManifest,
+        idea: str,
+        settings: RefinementSettings,
+        start_loop: int = 1,
+        start_index: int = 0,
+        previous: str = "",
+        best_output: str = "",
+    ) -> tuple[str, QualityReport]:
+        stage_indexes = {stage.name: index for index, stage in enumerate(self.config.pipeline.stages)}
+        if not best_output and manifest.best_output_file:
+            best_output = workspace.read_text(manifest.best_output_file)
+        if not best_output:
+            best_output = previous
+
+        stable_count = 0
+        loop = start_loop
+        stage_index = start_index
+        while loop <= manifest.total_loops:
+            manifest.current_loop = loop
+            while stage_index < len(self.config.pipeline.stages):
+                if manifest.steps_used >= settings.max_steps:
+                    if not manifest.best_output_file:
+                        raise PipelineError("max_steps foi atingido antes de produzir uma Proposta Mestra")
+                    manifest.termination_reason = TerminationReason.MAX_STEPS
+                    return best_output, assess_document(best_output)
+
+                stage = self.config.pipeline.stages[stage_index]
+                manifest.current_stage = stage.name
+                manifest.next_stage = stage.name
+                manifest.route_history.append(f"loop-{loop}:{stage.name}")
+                workspace.save_manifest(manifest)
+                previous = self._run_stage(
+                    workspace,
+                    manifest,
+                    stage_index,
+                    loop,
+                    idea,
+                    previous,
+                    manifest.total_loops,
+                )
+                manifest.steps_used += 1
+                stage_index += 1
+
+            report = assess_document(previous)
+            best_output, delta = self._record_quality(workspace, manifest, report, previous)
+            manifest.passes_completed = max(manifest.passes_completed, loop)
+            manifest.current_stage = None
+            workspace.save_manifest(manifest)
+
+            if report.gate_passed(settings.min_score):
+                manifest.termination_reason = TerminationReason.QUALITY_THRESHOLD
+                return best_output, assess_document(best_output)
+
+            if report.hard_gates_passed and len(manifest.quality_history) > 1:
+                if delta < settings.min_improvement:
+                    stable_count += 1
+                else:
+                    stable_count = 0
+                if stable_count >= settings.stable_passes:
+                    manifest.termination_reason = TerminationReason.STABLE_RESULT
+                    return best_output, assess_document(best_output)
+
+            if loop >= manifest.total_loops:
+                manifest.termination_reason = (
+                    TerminationReason.QUALITY_GATE_BLOCKED
+                    if not report.hard_gates_passed
+                    else TerminationReason.MAX_PASSES
+                )
+                return best_output, assess_document(best_output)
+
+            target_name = report.recommended_stage or "critical-review"
+            stage_index = stage_indexes.get(target_name, 0)
+            loop += 1
+            manifest.route_history.append(f"loop-{loop}:route:{self.config.pipeline.stages[stage_index].name}")
+            manifest.next_stage = self.config.pipeline.stages[stage_index].name
+            workspace.save_manifest(manifest)
+
+        manifest.termination_reason = TerminationReason.MAX_PASSES
+        return best_output, assess_document(best_output)
+
     def run(
         self,
         idea: str,
@@ -101,11 +264,13 @@ class PipelineRunner:
         output: Path | None = None,
         workspace_root: Path | None = None,
         run_id: str | None = None,
+        refine: bool | None = None,
     ) -> tuple[Path, Workspace, QualityReport]:
         if not idea.strip():
             raise PipelineError("A ideia inicial não pode ser vazia")
         if loops < 1 or loops > self.config.pipeline.max_loops:
             raise PipelineError(f"--loops deve estar entre 1 e {self.config.pipeline.max_loops}")
+        settings = RefinementSettings.from_config(self.config.pipeline.quality_loop, enabled=refine)
         workspace = Workspace(workspace_root or self.config.pipeline.workspace, run_id=run_id)
         input_path = workspace.write_text("input.md", idea.strip() + "\n")
         manifest = RunManifest(
@@ -114,33 +279,76 @@ class PipelineRunner:
             config_snapshot=self.config.model_dump(mode="json"),
             status=StageStatus.RUNNING,
             total_loops=loops,
+            execution_mode="refinement" if settings.enabled else "legacy",
         )
         workspace.save_manifest(manifest)
 
         previous = ""
         try:
+            if settings.enabled:
+                previous, report = self._run_refinement(workspace, manifest, idea.strip(), settings)
+                return self._write_final(workspace, manifest, previous, output, report)
+
             for loop in range(1, loops + 1):
                 manifest.current_loop = loop
-                workspace.save_manifest(manifest)
-                for stage_index in range(len(self.config.pipeline.stages)):
+                manifest.passes_completed = loop - 1
+                for stage_index, stage in enumerate(self.config.pipeline.stages):
+                    manifest.current_stage = stage.name
+                    manifest.next_stage = stage.name
+                    workspace.save_manifest(manifest)
                     previous = self._run_stage(
                         workspace,
                         manifest,
                         stage_index,
                         loop,
-                        idea,
+                        idea.strip(),
                         previous,
                         loops,
                     )
-            final_path = output or self.config.pipeline.output
-            final_path.parent.mkdir(parents=True, exist_ok=True)
-            final_path.write_text(previous + "\n", encoding="utf-8")
-            manifest.final_output = str(final_path)
-            manifest.status = StageStatus.COMPLETED
-            workspace.save_manifest(manifest)
-            return final_path, workspace, assess_document(previous)
+                    manifest.steps_used += 1
+                manifest.passes_completed = loop
+                workspace.save_manifest(manifest)
+            manifest.termination_reason = TerminationReason.COMPLETED
+            return self._write_final(workspace, manifest, previous, output, assess_document(previous))
         except Exception:
             manifest.status = StageStatus.FAILED
+            manifest.termination_reason = TerminationReason.FAILED
+            workspace.save_manifest(manifest)
+            raise
+
+    def _resume_refinement(
+        self,
+        workspace: Workspace,
+        manifest: RunManifest,
+        output: Path | None,
+    ) -> tuple[Path, Workspace, QualityReport]:
+        stage_indexes = {stage.name: index for index, stage in enumerate(self.config.pipeline.stages)}
+        start_index = stage_indexes.get(manifest.next_stage or "")
+        if start_index is None:
+            raise PipelineError("Não foi possível determinar a próxima etapa do refinamento")
+        previous = ""
+        completed_results = [result for result in manifest.stages if result.status == StageStatus.COMPLETED]
+        if completed_results and completed_results[-1].output_file:
+            previous = workspace.read_text(completed_results[-1].output_file)
+        best_output = workspace.read_text(manifest.best_output_file) if manifest.best_output_file else previous
+        settings = RefinementSettings.from_config(self.config.pipeline.quality_loop, enabled=True)
+        manifest.status = StageStatus.RUNNING
+        try:
+            idea = workspace.read_text(manifest.input_file).strip()
+            content, report = self._run_refinement(
+                workspace,
+                manifest,
+                idea,
+                settings,
+                start_loop=max(1, manifest.current_loop),
+                start_index=start_index,
+                previous=previous,
+                best_output=best_output,
+            )
+            return self._write_final(workspace, manifest, content, output, report)
+        except Exception:
+            manifest.status = StageStatus.FAILED
+            manifest.termination_reason = TerminationReason.FAILED
             workspace.save_manifest(manifest)
             raise
 
@@ -157,6 +365,8 @@ class PipelineRunner:
         manifest = workspace.load_manifest()
         if manifest.status == StageStatus.COMPLETED:
             raise PipelineError(f"A execução {run_id} já foi concluída")
+        if manifest.execution_mode == "refinement":
+            return self._resume_refinement(workspace, manifest, output)
 
         stage_indexes = {stage.name: index for index, stage in enumerate(self.config.pipeline.stages)}
         last_result = manifest.stages[-1] if manifest.stages else None
@@ -187,8 +397,10 @@ class PipelineRunner:
         try:
             for loop in range(start_loop, manifest.total_loops + 1):
                 manifest.current_loop = loop
-                workspace.save_manifest(manifest)
                 for stage_index in range(start_index if loop == start_loop else 0, len(self.config.pipeline.stages)):
+                    manifest.current_stage = self.config.pipeline.stages[stage_index].name
+                    manifest.next_stage = self.config.pipeline.stages[stage_index].name
+                    workspace.save_manifest(manifest)
                     previous = self._run_stage(
                         workspace,
                         manifest,
@@ -198,14 +410,12 @@ class PipelineRunner:
                         previous,
                         manifest.total_loops,
                     )
-            final_path = output or self.config.pipeline.output
-            final_path.parent.mkdir(parents=True, exist_ok=True)
-            final_path.write_text(previous + "\n", encoding="utf-8")
-            manifest.final_output = str(final_path)
-            manifest.status = StageStatus.COMPLETED
-            workspace.save_manifest(manifest)
-            return final_path, workspace, assess_document(previous)
+                    manifest.steps_used += 1
+                manifest.passes_completed = loop
+            manifest.termination_reason = TerminationReason.COMPLETED
+            return self._write_final(workspace, manifest, previous, output, assess_document(previous))
         except Exception:
             manifest.status = StageStatus.FAILED
+            manifest.termination_reason = TerminationReason.FAILED
             workspace.save_manifest(manifest)
             raise

@@ -39,6 +39,11 @@ def conceive(
     workspace: Path | None = typer.Option(None, "--workspace", help="Diretório para artefatos."),
     verbose: bool = typer.Option(False, "--verbose", "-v", help="Exibe detalhes da execução."),
     preview: bool = typer.Option(False, "--preview", help="Exibe o documento final no terminal."),
+    refine: bool = typer.Option(
+        False,
+        "--refine",
+        help="Ativa o loop condicional de qualidade; --loops define o máximo de passagens.",
+    ),
 ) -> None:
     """Transforma uma ideia em uma proposta arquitetural consolidada."""
     try:
@@ -48,6 +53,7 @@ def conceive(
             loops=loops,
             output=output,
             workspace_root=workspace,
+            refine=True if refine else None,
         )
     except OmniCLIError as exc:
         console.print(f"[red]Erro:[/red] {exc}")
@@ -55,6 +61,9 @@ def conceive(
     console.print(f"[green]Concluído:[/green] {final_path}")
     console.print(f"Workspace: {run_workspace.path}")
     console.print(f"Qualidade preliminar: {report.score}/100")
+    manifest = run_workspace.load_manifest()
+    if manifest.termination_reason:
+        console.print(f"Término: {manifest.termination_reason.value}")
     for warning in report.warnings:
         console.print(f"[yellow]Aviso:[/yellow] {warning}")
     if preview:
@@ -185,6 +194,14 @@ def inspect_run(
             result.output_file or result.error or "-",
         )
     console.print(f"Execução: {manifest.run_id} | status={manifest.status.value}")
+    if manifest.execution_mode == "refinement":
+        best_score = manifest.best_quality_score if manifest.best_quality_score is not None else "-"
+        console.print(
+            f"Modo: refinamento | qualidade={best_score} | "
+            f"passagens={manifest.passes_completed}/{manifest.total_loops} | "
+            f"passos={manifest.steps_used} | "
+            f"término={manifest.termination_reason.value if manifest.termination_reason else '-'}"
+        )
     console.print(table)
 
 

@@ -10,6 +10,7 @@ The roadmap protects OmniCLI's core idea: improve human–AI communication throu
 - [x] Prompt-size limits, prompt-injection boundaries, and artifact hashes.
 - [x] Safe bootstrap, CI matrix, packaging checks, and dependency automation.
 - [x] Research, threat model, bilingual onboarding, and community files.
+- [x] Bounded opt-in quality loop with deterministic routing and explicit termination reasons.
 
 ## 0.3 — Pipeline packs and evaluations
 

@@ -8,6 +8,11 @@ All notable changes to this project will be documented in this file. The format 
 
 - Reusable pipeline packs and proposal-quality evaluations.
 
+### Added
+
+- Opt-in `--refine` mode with bounded conditional routing after the master proposal.
+- Deterministic quality-gate signals, best-result preservation, and explicit termination reasons in run manifests.
+
 ## [0.2.0] - 2026-09-19
 
 ### Added

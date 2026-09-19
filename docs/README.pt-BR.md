@@ -43,6 +43,33 @@ omnicli conceive \
   --preview
 ```
 
+### Loop condicional de qualidade
+
+O comportamento padrão de `--loops` não muda: cada loop executa a esteira completa. Use `--refine` para transformar `--loops` no número máximo de passagens da proposta. Após cada `master-proposal`, o OmniCLI executa um quality gate determinístico e retorna somente ao trecho necessário da esteira — por exemplo, a `critical-review` quando faltam riscos ou decisões. O gate não delega a aprovação a um LLM opaco.
+
+```bash
+omnicli conceive \
+  "Aplicativo de meditação gamificado com progressão de RPG" \
+  --loops 3 \
+  --refine \
+  --output proposta-arquitetura.md \
+  --verbose
+```
+
+O recurso é opt-in também pelo YAML:
+
+```yaml
+pipeline:
+  quality_loop:
+    enabled: false
+    min_score: 80
+    min_improvement: 3
+    stable_passes: 1
+    max_steps: 30
+```
+
+O manifesto registra histórico de qualidade, passos consumidos, passagens concluídas e `termination_reason`. O score mede sinais de completude e não garante correção; toda proposta continua exigindo revisão humana.
+
 ## Diagnóstico
 
 ```bash
