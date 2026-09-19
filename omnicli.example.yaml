@@ -1,0 +1,68 @@
+pipeline:
+  name: conception
+  max_loops: 3
+  workspace: .omnicli_workspace
+  output: proposta.md
+  retain_prompt_content: false
+  stages:
+    - name: discovery
+      provider: gemini
+      role: Explorador de produto
+      instruction: >-
+        Expanda a ideia inicial. Identifique problema, público-alvo, objetivos,
+        funcionalidades e perguntas ainda não respondidas.
+      timeout_seconds: 300
+      max_retries: 1
+    - name: critical-review
+      provider: claude
+      role: Revisor crítico
+      instruction: >-
+        Questione premissas, contradições, riscos, dependências e excesso de escopo.
+        Sugira correções objetivas.
+      timeout_seconds: 300
+      max_retries: 1
+    - name: architecture
+      provider: codex
+      role: Arquiteto de soluções
+      instruction: >-
+        Estruture componentes, fluxos, dados, integrações, segurança,
+        observabilidade e plano de implementação.
+      timeout_seconds: 300
+      max_retries: 1
+    - name: feasibility
+      provider: gemini
+      role: Revisor de viabilidade
+      instruction: >-
+        Avalie custos, complexidade, riscos operacionais e alternativas mais simples.
+      timeout_seconds: 300
+      max_retries: 1
+    - name: master-proposal
+      provider: claude
+      role: Editor técnico
+      instruction: >-
+        Consolide a Proposta Mestra com escopo, premissas, requisitos,
+        arquitetura, riscos, critérios de aceite e decisões pendentes.
+      timeout_seconds: 300
+      max_retries: 1
+
+providers:
+  gemini:
+    command: gemini
+    args: []
+    enabled: true
+    version_args: [--version]
+  claude:
+    command: claude
+    args: []
+    enabled: true
+    version_args: [--version]
+  codex:
+    command: codex
+    args: []
+    enabled: true
+    version_args: [--version]
+  copilot:
+    command: gh
+    args: [copilot]
+    enabled: true
+    version_args: [--version]
