@@ -33,3 +33,4 @@ def test_doctor_json_is_automation_friendly(tmp_path: Path) -> None:
     payload = json.loads(result.stdout)
     assert payload["ready"] is True
     assert payload["providers"][0]["transport"] == "argv"
+    assert payload["providers"][0]["capability_status"] is None

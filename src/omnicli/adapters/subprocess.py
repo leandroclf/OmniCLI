@@ -63,6 +63,36 @@ class SubprocessAdapter(ProviderAdapter):
             raise ProviderError(f"A CLI {self.provider_name} não respondeu corretamente à verificação de versão")
         return version[0][:300]
 
+    def check_capabilities(self) -> str:
+        """Check documented command markers using a safe help invocation.
+
+        This never sends a prompt, starts a session, or requests model output.
+        The markers are intentionally declared in configuration because each
+        provider owns its own command vocabulary.
+        """
+        self._ensure_available()
+        if not self.config.required_capabilities:
+            return "não declarado"
+        try:
+            result = subprocess.run(
+                [self.config.command, *self.config.capability_args],
+                capture_output=True,
+                text=True,
+                timeout=20,
+                check=False,
+                env=self._environment(),
+            )
+        except (OSError, subprocess.TimeoutExpired) as exc:
+            raise ProviderError(f"Não foi possível consultar capacidades de {self.provider_name}: {exc}") from exc
+        output = f"{result.stdout}\n{result.stderr}".casefold()
+        missing = [marker for marker in self.config.required_capabilities if marker.casefold() not in output]
+        if result.returncode != 0 or missing:
+            missing_text = ", ".join(missing) if missing else "resposta de ajuda inválida"
+            raise ProviderError(
+                f"Contrato de capacidades incompatível para {self.provider_name}; ausente: {missing_text}"
+            )
+        return ", ".join(self.config.required_capabilities)
+
     def run(self, prompt: str, timeout_seconds: float) -> ProviderResponse:
         self._ensure_available()
         command, stdin = self.invocation(prompt)

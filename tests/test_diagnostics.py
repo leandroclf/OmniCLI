@@ -26,3 +26,14 @@ def test_doctor_fails_when_required_provider_is_disabled() -> None:
     report = diagnose(_config(ProviderConfig(command=sys.executable, enabled=False)))
     assert not report.ready
     assert report.providers[0].status == "disabled"
+
+
+def test_doctor_checks_declared_capabilities() -> None:
+    provider = ProviderConfig(
+        command=sys.executable,
+        capability_args=["-c", "print('exec -p')"],
+        required_capabilities=["exec", "-p"],
+    )
+    report = diagnose(_config(provider), check_capabilities=True)
+    assert report.ready
+    assert report.providers[0].capability_status == "exec, -p"

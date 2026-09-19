@@ -16,8 +16,11 @@ class ProviderDiagnostic:
     transport: str
     status: str
     detail: str
+    capability_status: str | None
+    documentation_url: str | None
+    installation_url: str | None
 
-    def as_dict(self) -> dict[str, str | bool]:
+    def as_dict(self) -> dict[str, str | bool | None]:
         return asdict(self)
 
 
@@ -33,7 +36,11 @@ class DoctorReport:
         }
 
 
-def diagnose(config: OmniConfig, check_versions: bool = True) -> DoctorReport:
+def diagnose(
+    config: OmniConfig,
+    check_versions: bool = True,
+    check_capabilities: bool = False,
+) -> DoctorReport:
     required = {stage.provider for stage in config.pipeline.stages}
     diagnostics: list[ProviderDiagnostic] = []
     ready = True
@@ -43,6 +50,7 @@ def diagnose(config: OmniConfig, check_versions: bool = True) -> DoctorReport:
         transport = "argv" if "{prompt}" in provider.args else "stdin"
         status = "ready"
         detail = "configuração válida"
+        capability_status: str | None = None
 
         if not provider.enabled:
             status = "disabled"
@@ -57,6 +65,13 @@ def diagnose(config: OmniConfig, check_versions: bool = True) -> DoctorReport:
                 status = "error"
                 detail = str(exc)
 
+        if status == "ready" and check_capabilities:
+            try:
+                capability_status = SubprocessAdapter(name, provider).check_capabilities()
+            except OmniCLIError as exc:
+                status = "error"
+                capability_status = str(exc)
+
         if is_required and status != "ready":
             ready = False
         diagnostics.append(
@@ -68,6 +83,9 @@ def diagnose(config: OmniConfig, check_versions: bool = True) -> DoctorReport:
                 transport=transport,
                 status=status,
                 detail=detail,
+                capability_status=capability_status,
+                documentation_url=provider.documentation_url,
+                installation_url=provider.installation_url,
             )
         )
 

@@ -11,6 +11,7 @@ The roadmap protects OmniCLI's core idea: improve human–AI communication throu
 - [x] Safe bootstrap, CI matrix, packaging checks, and dependency automation.
 - [x] Research, threat model, bilingual onboarding, and community files.
 - [x] Bounded opt-in quality loop with deterministic routing and explicit termination reasons.
+- [x] Official provider source registry, version checks, and safe capability probes.
 
 ## 0.3 — Pipeline packs and evaluations
 
@@ -18,7 +19,7 @@ The roadmap protects OmniCLI's core idea: improve human–AI communication throu
 - [ ] Stable schemas for stage inputs and outputs.
 - [ ] Deterministic fixtures and rubric-based evaluation reports.
 - [ ] Run metrics for latency, failures, retries, and context growth.
-- [ ] Compatibility matrix generated from opt-in provider contract tests.
+- [ ] Compatibility matrix generated from opt-in provider contract tests across pinned provider versions.
 
 ## 0.4 — Extension ecosystem
 

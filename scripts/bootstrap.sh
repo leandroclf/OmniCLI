@@ -9,9 +9,11 @@ CONFIG_PATH="${OMNICLI_CONFIG:-$ROOT_DIR/omnicli.yaml}"
 MODE="${OMNICLI_BOOTSTRAP_MODE:-plan}"
 RUN_CHECKS=false
 RUN_PROVIDERS=false
+RUN_OFFICIAL_DOCS=false
 IDEA=""
 LOOPS=1
 OUTPUT="proposta.md"
+REFINE=false
 
 usage() {
   cat <<'EOF'
@@ -23,12 +25,14 @@ Por padrão o script apenas exibe o plano. Nenhuma instalação ou alteração �
 Opções:
   --apply                 cria/atualiza o ambiente local e instala o projeto
   --check                 executa testes, Ruff e mypy depois da instalação
-  --providers             verifica CLIs de IA configuradas, sem gerar conteúdo
+  --providers             verifica versão e contrato de ajuda das CLIs, sem gerar conteúdo
+  --official-docs         verifica se as fontes oficiais registradas estão acessíveis
   --config PATH           caminho da configuração YAML
   --venv PATH             diretório do ambiente virtual
   --idea TEXT             executa conceive explicitamente após o bootstrap
   --loops N               ciclos usados com --idea (padrão: 1)
   --output PATH           saída usada com --idea (padrão: proposta.md)
+  --refine                usa o loop condicional de qualidade com --idea
   --help                  exibe esta ajuda
 
 Variáveis:
@@ -40,7 +44,7 @@ Variáveis:
 Exemplos:
   scripts/bootstrap.sh
   scripts/bootstrap.sh --apply --check
-  scripts/bootstrap.sh --apply --providers
+  scripts/bootstrap.sh --apply --providers --official-docs
   scripts/bootstrap.sh --apply --idea "Meu produto" --output proposta.md
 EOF
 }
@@ -85,7 +89,8 @@ plan() {
   log "1. criar ou reutilizar o ambiente virtual"
   log "2. instalar o projeto com dependências de desenvolvimento"
   [[ "$RUN_CHECKS" = true ]] && log "3. executar pytest, Ruff e mypy"
-  [[ "$RUN_PROVIDERS" = true ]] && log "4. diagnosticar as CLIs configuradas"
+  [[ "$RUN_PROVIDERS" = true ]] && log "4. diagnosticar versões e contratos das CLIs configuradas"
+  [[ "$RUN_OFFICIAL_DOCS" = true ]] && log "5. verificar fontes oficiais registradas"
   [[ -n "$IDEA" ]] && log "executar concepção somente após aprovação explícita (--apply)"
   return 0
 }
@@ -102,6 +107,10 @@ while [[ $# -gt 0 ]]; do
       ;;
     --providers)
       RUN_PROVIDERS=true
+      shift
+      ;;
+    --official-docs)
+      RUN_OFFICIAL_DOCS=true
       shift
       ;;
     --config)
@@ -129,6 +138,10 @@ while [[ $# -gt 0 ]]; do
       OUTPUT="$2"
       shift 2
       ;;
+    --refine)
+      REFINE=true
+      shift
+      ;;
     --help|-h)
       usage
       exit 0
@@ -140,6 +153,7 @@ while [[ $# -gt 0 ]]; do
 done
 
 [[ "$MODE" = plan || "$MODE" = apply ]] || fail "OMNICLI_BOOTSTRAP_MODE deve ser plan ou apply"
+[[ "$LOOPS" =~ ^[1-9][0-9]*$ ]] || fail "--loops deve ser um inteiro positivo"
 CONFIG_PATH="$(normalize_path "$CONFIG_PATH")"
 
 if [[ "$MODE" = plan ]]; then
@@ -183,15 +197,22 @@ fi
 
 if [[ "$RUN_PROVIDERS" = true ]]; then
   log "validando configuração e provedores; nenhuma geração de conteúdo será iniciada"
-  "$VENV_PYTHON" -m omnicli doctor --config "$CONFIG_PATH"
+  "$VENV_PYTHON" -m omnicli doctor --config "$CONFIG_PATH" --capabilities
+fi
+
+if [[ "$RUN_OFFICIAL_DOCS" = true ]]; then
+  log "verificando fontes oficiais; nenhum provedor será executado"
+  bash "$ROOT_DIR/scripts/check-official-docs.sh"
 fi
 
 if [[ -n "$IDEA" ]]; then
   log "executando pipeline de concepção explicitamente solicitado"
-  "$VENV_PYTHON" -m omnicli conceive "$IDEA" \
+  CONCEIVE_ARGS=("$VENV_PYTHON" -m omnicli conceive "$IDEA" \
     --config "$CONFIG_PATH" \
     --loops "$LOOPS" \
-    --output "$OUTPUT"
+    --output "$OUTPUT")
+  [[ "$REFINE" = true ]] && CONCEIVE_ARGS+=(--refine)
+  "${CONCEIVE_ARGS[@]}"
 fi
 
 log "bootstrap concluído"

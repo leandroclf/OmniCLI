@@ -80,6 +80,10 @@ class ProviderConfig(BaseModel):
     args: list[str] = Field(default_factory=list)
     enabled: bool = True
     version_args: list[str] = Field(default_factory=lambda: ["--version"])
+    capability_args: list[str] = Field(default_factory=lambda: ["--help"])
+    required_capabilities: list[str] = Field(default_factory=list)
+    documentation_url: str | None = None
+    installation_url: str | None = None
     environment: dict[str, str] = Field(default_factory=dict)
     max_prompt_chars: int = Field(default=200_000, ge=1_000, le=1_000_000)
 

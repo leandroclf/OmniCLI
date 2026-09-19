@@ -11,7 +11,7 @@ OmniCLI is a local, configurable orchestrator for authenticated command-line AI 
 
 > OmniCLI does not promise “free AI.” It does not require its own API keys, but every provider remains subject to its subscription, quota, licensing, privacy, and acceptable-use terms.
 
-[Leia em Português](docs/README.pt-BR.md) · [Architecture](docs/architecture.md) · [Research](docs/research/landscape.md) · [Roadmap](ROADMAP.md)
+[Leia em Português](docs/README.pt-BR.md) · [Architecture](docs/architecture.md) · [Provider compatibility](docs/provider-compatibility.md) · [Research](docs/research/landscape.md) · [Roadmap](ROADMAP.md)
 
 ## Why OmniCLI?
 
@@ -35,7 +35,7 @@ git clone https://github.com/leandroclf/OmniCLI.git
 cd OmniCLI
 bash scripts/bootstrap.sh --apply --check
 source .venv/bin/activate
-omnicli doctor
+omnicli doctor --capabilities
 ```
 
 The bootstrap creates a local virtual environment and configuration. It never uses `sudo`, installs provider CLIs, or contacts a model unless you explicitly pass `--idea`.
@@ -57,17 +57,17 @@ OmniCLI 0.2 uses each provider's documented headless interface instead of assumi
 | Provider | Default invocation shape | Default state |
 |---|---|---|
 | Gemini CLI | `gemini -p "{prompt}" --output-format text` | enabled |
-| Claude Code | `claude -p "{prompt}"` | enabled |
+| Claude Code | `claude -p "{prompt}" --output-format text` | enabled |
 | Codex CLI | `codex exec "{prompt}"` | enabled |
-| GitHub Copilot CLI | standalone `copilot` command | disabled until a stable headless command is configured |
+| GitHub Copilot CLI | `copilot -p "{prompt}"` | enabled, not used by the default pipeline |
 
 `{prompt}` is passed as one process argument without a shell. Custom tools can omit the placeholder to receive the prompt through `stdin`.
 
 ## Core commands
 
 ```bash
-omnicli doctor [--json] [--skip-version]
-omnicli providers check
+omnicli doctor [--json] [--skip-version] [--capabilities]
+omnicli providers check [--capabilities]
 omnicli init omnicli.yaml
 omnicli conceive "My idea" --config omnicli.yaml
 omnicli conceive "My idea" --loops 3 --refine --output proposal.md
@@ -75,7 +75,7 @@ omnicli run inspect RUN_ID
 omnicli run resume RUN_ID
 ```
 
-`doctor` validates the configuration, required executables, provider versions, and prompt transport without generating content.
+`doctor --capabilities` validates the configuration, required executables, provider versions, and documented help markers without generating content. See [provider compatibility](docs/provider-compatibility.md) for the update policy; a passing probe is not a guarantee that every vendor feature is supported.
 
 ## Pipeline model
 

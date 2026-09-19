@@ -57,22 +57,38 @@ providers:
     args: [-p, "{prompt}", --output-format, text]
     enabled: true
     version_args: [--version]
+    capability_args: [--help]
+    required_capabilities: ["-p", "--output-format"]
+    documentation_url: https://github.com/google-gemini/gemini-cli/blob/main/docs/cli/headless.md
+    installation_url: https://github.com/google-gemini/gemini-cli#installation
     max_prompt_chars: 200000
   claude:
     command: claude
-    args: [-p, "{prompt}"]
+    args: [-p, "{prompt}", --output-format, text]
     enabled: true
     version_args: [--version]
+    capability_args: [--help]
+    required_capabilities: ["-p"]
+    documentation_url: https://code.claude.com/docs/en/cli-reference
+    installation_url: https://code.claude.com/docs/en/setup
     max_prompt_chars: 200000
   codex:
     command: codex
     args: [exec, "{prompt}"]
     enabled: true
     version_args: [--version]
+    capability_args: [--help]
+    required_capabilities: ["exec"]
+    documentation_url: https://developers.openai.com/codex/cli
+    installation_url: https://developers.openai.com/codex/cli
     max_prompt_chars: 200000
   copilot:
     command: copilot
-    args: []
-    enabled: false
+    args: [-p, "{prompt}"]
+    enabled: true
     version_args: [--version]
+    capability_args: [help]
+    required_capabilities: ["-p", "--prompt"]
+    documentation_url: https://docs.github.com/en/copilot/concepts/agents/copilot-cli/about-copilot-cli
+    installation_url: https://docs.github.com/en/copilot/how-tos/copilot-cli/set-up-copilot-cli/install-copilot-cli
     max_prompt_chars: 200000

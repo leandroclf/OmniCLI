@@ -19,6 +19,15 @@ class ProviderAdapter(ABC):
     def check(self) -> str:
         """Return the provider version or raise a provider error."""
 
+    def check_capabilities(self) -> str:
+        """Return a non-interactive capability check or raise a provider error.
+
+        Adapters that do not expose a help-surface contract can keep the default
+        implementation. This keeps provider capability checks additive for
+        custom adapters.
+        """
+        return "não declarado"
+
     @abstractmethod
     def run(self, prompt: str, timeout_seconds: float) -> ProviderResponse:
         """Run a prompt through the provider."""

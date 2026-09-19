@@ -60,12 +60,36 @@ DEFAULT_CONFIG = OmniConfig(
         ]
     ),
     providers={
-        "gemini": ProviderConfig(command="gemini", args=["-p", "{prompt}", "--output-format", "text"]),
-        "claude": ProviderConfig(command="claude", args=["-p", "{prompt}"]),
-        "codex": ProviderConfig(command="codex", args=["exec", "{prompt}"]),
-        # The standalone Copilot CLI is detected, but disabled until a stable
-        # documented non-interactive invocation is configured by the user.
-        "copilot": ProviderConfig(command="copilot", enabled=False),
+        "gemini": ProviderConfig(
+            command="gemini",
+            args=["-p", "{prompt}", "--output-format", "text"],
+            required_capabilities=["-p", "--output-format"],
+            documentation_url="https://github.com/google-gemini/gemini-cli/blob/main/docs/cli/headless.md",
+            installation_url="https://github.com/google-gemini/gemini-cli#installation",
+        ),
+        "claude": ProviderConfig(
+            command="claude",
+            args=["-p", "{prompt}", "--output-format", "text"],
+            required_capabilities=["-p"],
+            documentation_url="https://code.claude.com/docs/en/cli-reference",
+            installation_url="https://code.claude.com/docs/en/setup",
+        ),
+        "codex": ProviderConfig(
+            command="codex",
+            args=["exec", "{prompt}"],
+            required_capabilities=["exec"],
+            documentation_url="https://developers.openai.com/codex/cli",
+            installation_url="https://developers.openai.com/codex/cli",
+        ),
+        "copilot": ProviderConfig(
+            command="copilot",
+            args=["-p", "{prompt}"],
+            enabled=True,
+            capability_args=["help"],
+            required_capabilities=["-p", "--prompt"],
+            documentation_url="https://docs.github.com/en/copilot/concepts/agents/copilot-cli/about-copilot-cli",
+            installation_url="https://docs.github.com/en/copilot/how-tos/copilot-cli/set-up-copilot-cli/install-copilot-cli",
+        ),
     },
 )
 

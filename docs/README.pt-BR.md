@@ -28,7 +28,7 @@ git clone https://github.com/leandroclf/OmniCLI.git
 cd OmniCLI
 bash scripts/bootstrap.sh --apply --check
 source .venv/bin/activate
-omnicli doctor
+omnicli doctor --capabilities
 ```
 
 O bootstrap cria ambiente virtual e configuração locais. Ele não usa `sudo`, não instala CLIs de provedores e não chama modelos sem a opção explícita `--idea`.
@@ -73,23 +73,29 @@ O manifesto registra histórico de qualidade, passos consumidos, passagens concl
 ## Diagnóstico
 
 ```bash
-omnicli doctor
-omnicli doctor --json
-omnicli providers check
+omnicli doctor --capabilities
+omnicli doctor --capabilities --json
+omnicli providers check --capabilities
 ```
 
-`doctor` valida a configuração, os executáveis obrigatórios, versões e transporte dos prompts sem gerar conteúdo.
+`doctor --capabilities` valida a configuração, executáveis obrigatórios, versões
+e marcadores mínimos da ajuda local sem gerar conteúdo. Consulte a
+[política de compatibilidade](provider-compatibility.md) para acompanhar as
+mudanças oficiais sem prometer suporte automático a toda feature nova.
 
 ## Invocações padrão
 
 | Provedor | Forma de execução | Estado padrão |
 |---|---|---|
 | Gemini CLI | `gemini -p "{prompt}" --output-format text` | habilitado |
-| Claude Code | `claude -p "{prompt}"` | habilitado |
+| Claude Code | `claude -p "{prompt}" --output-format text` | habilitado |
 | Codex CLI | `codex exec "{prompt}"` | habilitado |
-| GitHub Copilot CLI | comando independente `copilot` | desabilitado até configurar modo headless estável |
+| GitHub Copilot CLI | `copilot -p "{prompt}"` | habilitado, fora do pipeline padrão |
 
 O placeholder `{prompt}` é enviado como um único argumento sem shell. Ferramentas personalizadas podem omiti-lo para receber o prompt por `stdin`.
+
+O bootstrap também oferece `--official-docs` para verificar as URLs oficiais
+registradas, sem enviar prompts nem instalar provedores.
 
 ## Segurança e rastreabilidade
 

@@ -1,0 +1,10 @@
+# Official source URLs used by the compatibility registry.
+# Keep this list aligned with src/omnicli/config.py and docs/provider-compatibility.md.
+https://github.com/google-gemini/gemini-cli/blob/main/docs/cli/headless.md
+https://github.com/google-gemini/gemini-cli/blob/main/docs/cli/cli-reference.md
+https://github.com/google-gemini/gemini-cli#installation
+https://code.claude.com/docs/en/cli-reference
+https://code.claude.com/docs/en/setup
+https://developers.openai.com/codex/cli
+https://docs.github.com/en/copilot/concepts/agents/copilot-cli/about-copilot-cli
+https://docs.github.com/en/copilot/how-tos/copilot-cli/set-up-copilot-cli/install-copilot-cli

@@ -15,3 +15,11 @@ def test_bootstrap_defaults_to_safe_plan_mode() -> None:
     assert result.returncode == 0, result.stderr
     assert "modo plan" in result.stdout
     assert "nenhuma alteração será feita" in result.stdout
+
+
+def test_bootstrap_help_mentions_safe_provider_checks() -> None:
+    result = subprocess.run(["bash", str(SCRIPT), "--help"], cwd=ROOT, capture_output=True, text=True)
+    assert result.returncode == 0
+    assert "--providers" in result.stdout
+    assert "--official-docs" in result.stdout
+    assert "--refine" in result.stdout

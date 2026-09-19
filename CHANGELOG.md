@@ -12,6 +12,7 @@ All notable changes to this project will be documented in this file. The format 
 
 - Opt-in `--refine` mode with bounded conditional routing after the master proposal.
 - Deterministic quality-gate signals, best-result preservation, and explicit termination reasons in run manifests.
+- Official provider compatibility registry, safe help-surface capability probes, and optional bootstrap URL checks.
 
 ## [0.2.0] - 2026-09-19
 
@@ -27,13 +28,13 @@ All notable changes to this project will be documented in this file. The format 
 ### Changed
 
 - Default provider commands now match documented Gemini, Claude, and Codex headless interfaces.
-- GitHub Copilot now uses the standalone `copilot` command and is disabled by default until a stable headless invocation is configured.
+- Default provider contracts now include documented Claude output mode and GitHub Copilot `-p` prompt mode; Copilot remains outside the default stage pipeline.
 - CI now runs type checking, dependency validation, CLI smoke tests, and package builds.
 
 ### Security
 
 - Provider prompts are never interpolated into shell commands.
-- Uncertain provider integrations are disabled rather than invoked interactively.
+- Uncertain provider integrations are not invoked interactively or enabled in the stage pipeline.
 
 ## [0.1.0] - 2026-09-19
 

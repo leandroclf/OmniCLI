@@ -45,7 +45,13 @@ O transporte é inferido pela configuração:
 - nenhuma invocação utiliza shell;
 - `max_prompt_chars` limita crescimento acidental de contexto.
 
-Os defaults usam as interfaces headless documentadas: `gemini -p`, `claude -p` e `codex exec`. Copilot permanece desabilitado até que o usuário defina um contrato headless documentado e compatível com sua versão.
+Os defaults usam as interfaces headless documentadas: `gemini -p`, `claude -p`,
+`codex exec` e `copilot -p`. Cada provedor declara URLs oficiais, argumentos de
+versão e marcadores mínimos de capacidade. `omnicli doctor --capabilities`
+consulta a ajuda local sem enviar prompts; isso detecta incompatibilidades de
+contrato, mas não tenta enumerar automaticamente todas as features do fornecedor.
+Consulte [provider-compatibility.md](provider-compatibility.md) para a política
+de atualização.
 
 ### Contexto entre etapas
 

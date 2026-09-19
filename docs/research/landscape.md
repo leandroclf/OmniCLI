@@ -1,6 +1,6 @@
 # Project landscape and product decisions
 
-Research date: 2026-09-19. Sources are official project repositories and vendor documentation. Feature availability can change; provider commands must be checked before each compatibility release.
+Research date: 2026-09-19. Sources are official project repositories and vendor documentation. Feature availability can change; provider commands must be checked before each compatibility release. See [provider-compatibility.md](../provider-compatibility.md) for the executable contract and maintenance policy.
 
 ## Comparable projects
 
@@ -13,7 +13,7 @@ Research date: 2026-09-19. Sources are official project repositories and vendor 
 | [Gemini CLI](https://github.com/google-gemini/gemini-cli) | Headless output formats, checkpointing, sandbox and telemetry controls | Prefer documented non-interactive contracts and explicit diagnostics | Depending on undocumented terminal behavior |
 | [Codex CLI](https://github.com/openai/codex) | Local terminal agent with explicit non-interactive execution | Treat each provider as a versioned adapter contract | Assuming all tools consume prompts the same way |
 | [Claude Code](https://github.com/anthropics/claude-code) | Terminal-native agent, programmatic mode and extension ecosystem | Keep official installation and invocation guidance current | Coupling OmniCLI to one vendor's agent model |
-| [GitHub Copilot CLI](https://github.com/github/copilot-cli) | Standalone CLI, approval-oriented interaction and MCP extension | Favor explicit approval and detect the current standalone command | Retaining the obsolete `gh copilot` extension command or inventing undocumented headless flags |
+| [GitHub Copilot CLI](https://docs.github.com/en/copilot/concepts/agents/copilot-cli/about-copilot-cli) | Standalone CLI with documented `-p`/`--prompt`, approval-oriented tools and MCP extension | Use the documented prompt mode, probe the installed help surface, and retain explicit approval | Retaining the obsolete `gh copilot` extension command or enabling `--allow-all-tools`/`--yolo` |
 
 ## Critical assessment of the original proposal
 
@@ -38,9 +38,10 @@ Research date: 2026-09-19. Sources are official project repositories and vendor 
 
 - [x] Official headless command shapes for Gemini, Claude, and Codex.
 - [x] `omnicli doctor` with JSON output for automated readiness checks.
-- [x] Shell-free execution, prompt-size limits, disabled-by-default uncertain integrations.
+- [x] Shell-free execution, prompt-size limits, and opt-in execution for uncertain integrations.
 - [x] Prompt/output hashes and prompt-injection boundaries.
 - [x] Safe, reproducible bootstrap and multi-version CI.
+- [x] Version/capability probes with an official-source registry and optional URL check.
 - [ ] Provider contract tests against pinned real CLI versions in an opt-in compatibility workflow.
 
 ### P1 — community usefulness

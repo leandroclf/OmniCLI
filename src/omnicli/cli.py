@@ -9,7 +9,7 @@ from rich.markdown import Markdown
 from rich.table import Table
 
 from omnicli import __version__
-from omnicli.adapters.subprocess import SubprocessAdapter, command_exists
+from omnicli.adapters.subprocess import SubprocessAdapter
 from omnicli.config import load_config, write_example_config
 from omnicli.diagnostics import diagnose
 from omnicli.exceptions import OmniCLIError
@@ -73,6 +73,11 @@ def conceive(
 @providers_app.command("check")
 def providers_check(
     config: Path | None = typer.Option(None, "--config", "-c", help="Arquivo YAML de configuração."),
+    capabilities: bool = typer.Option(
+        False,
+        "--capabilities",
+        help="Também verifica marcadores documentados na saída de ajuda da CLI.",
+    ),
 ) -> None:
     """Verifica quais CLIs estão instaladas e respondendo."""
     try:
@@ -80,19 +85,16 @@ def providers_check(
     except OmniCLIError as exc:
         console.print(f"[red]Erro:[/red] {exc}")
         raise typer.Exit(code=1) from exc
-    table = Table("Provedor", "Comando", "Disponível", "Versão/diagnóstico")
-    for name, provider_config in loaded.providers.items():
-        if not provider_config.enabled:
-            table.add_row(name, provider_config.command, "não", "desabilitado")
-            continue
-        if not command_exists(provider_config.command):
-            table.add_row(name, provider_config.command, "não", "comando não encontrado")
-            continue
-        try:
-            version = SubprocessAdapter(name, provider_config).check()
-            table.add_row(name, provider_config.command, "sim", version)
-        except OmniCLIError as exc:
-            table.add_row(name, provider_config.command, "não", str(exc))
+    report = diagnose(loaded, check_versions=True, check_capabilities=capabilities)
+    table = Table("Provedor", "Comando", "Disponível", "Versão/diagnóstico", "Contrato")
+    for provider in report.providers:
+        table.add_row(
+            provider.name,
+            provider.command,
+            "sim" if provider.status == "ready" else "não",
+            provider.detail,
+            provider.capability_status or "não verificado",
+        )
     console.print(table)
 
 
@@ -101,10 +103,19 @@ def doctor(
     config: Path | None = typer.Option(None, "--config", "-c", help="Arquivo YAML de configuração."),
     output_json: bool = typer.Option(False, "--json", help="Emite diagnóstico estruturado em JSON."),
     skip_version: bool = typer.Option(False, "--skip-version", help="Não executa os comandos de versão."),
+    capabilities: bool = typer.Option(
+        False,
+        "--capabilities",
+        help="Verifica a superfície de ajuda e o contrato declarado de cada CLI.",
+    ),
 ) -> None:
     """Valida configuração, transporte de prompts e CLIs exigidas pelo pipeline."""
     try:
-        report = diagnose(load_config(config), check_versions=not skip_version)
+        report = diagnose(
+            load_config(config),
+            check_versions=not skip_version,
+            check_capabilities=capabilities,
+        )
     except OmniCLIError as exc:
         if output_json:
             console.print_json(json.dumps({"ready": False, "error": str(exc)}, ensure_ascii=False))
@@ -115,7 +126,7 @@ def doctor(
     if output_json:
         console.print_json(json.dumps(report.as_dict(), ensure_ascii=False))
     else:
-        table = Table("Provedor", "Obrigatório", "Transporte", "Status", "Detalhe")
+        table = Table("Provedor", "Obrigatório", "Transporte", "Status", "Versão/diagnóstico", "Contrato")
         for provider in report.providers:
             table.add_row(
                 provider.name,
@@ -123,6 +134,7 @@ def doctor(
                 provider.transport,
                 provider.status,
                 provider.detail,
+                provider.capability_status or "não verificado",
             )
         console.print(table)
         if report.ready:

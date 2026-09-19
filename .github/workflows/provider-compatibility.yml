@@ -1,0 +1,32 @@
+name: Provider compatibility sources
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "17 6 * * 1"
+  pull_request:
+    paths:
+      - "docs/provider-sources.txt"
+      - "docs/provider-compatibility.md"
+      - "scripts/check-official-docs.sh"
+      - "src/omnicli/config.py"
+      - "src/omnicli/models.py"
+      - "tests/test_config.py"
+
+permissions:
+  contents: read
+
+jobs:
+  sources:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check official documentation URLs
+        run: bash scripts/check-official-docs.sh
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: python -m pip install -e '.[dev]'
+      - name: Check the provider registry
+        run: pytest tests/test_config.py tests/test_subprocess_adapter.py

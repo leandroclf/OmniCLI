@@ -38,3 +38,23 @@ def test_prompt_size_limit_is_enforced() -> None:
 def test_embedded_prompt_placeholder_is_rejected() -> None:
     with pytest.raises(ValidationError, match="isolated argument"):
         ProviderConfig(command="tool", args=["--prompt={prompt}"])
+
+
+def test_capability_probe_uses_help_arguments_without_prompt() -> None:
+    config = ProviderConfig(
+        command=sys.executable,
+        capability_args=["-c", "print('-p --output-format')"],
+        required_capabilities=["-p", "--output-format"],
+    )
+    result = SubprocessAdapter("python", config).check_capabilities()
+    assert result == "-p, --output-format"
+
+
+def test_capability_probe_reports_missing_marker() -> None:
+    config = ProviderConfig(
+        command=sys.executable,
+        capability_args=["-c", "print('-p')"],
+        required_capabilities=["-p", "--output-format"],
+    )
+    with pytest.raises(ProviderError, match="--output-format"):
+        SubprocessAdapter("python", config).check_capabilities()
