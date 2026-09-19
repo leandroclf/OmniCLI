@@ -1,0 +1,144 @@
+version: provider-compatibility-v1
+status: partial-execution
+execution_policy:
+  authentication_required: true
+  opt_in_only: true
+  persist_credentials: false
+  persist_prompt_content: false
+  repeat_successful_cases: 2
+  required_commands:
+    - omnicli doctor --capabilities --json
+    - omnicli lab verify --json
+validation_runs:
+  - id: linear-pipeline-smoke-2026-09-19
+    status: passed
+    scope: claude-and-codex-only
+    loops: 1
+    stage_count: 5
+    providers: [claude, codex, codex, claude, claude]
+    exit_status: 0
+    duration_ms: 218210
+    quality_score: 100
+    retries: 0
+    prompt_chars: 43925
+    output_chars: 43069
+    max_context_chars: 20408
+    context_growth_chars: 19094
+    content_persisted: false
+    human_review_required: true
+providers:
+  - id: gemini
+    configured_command: gemini
+    status: deferred-next-stage
+    versions:
+      - observed: 0.60.0
+        operating_system: Linux
+        python_version: 3.13.14
+        verification_date: 2026-09-19
+        authentication_method: configured-local-GEMINI_API_KEY
+    cases:
+      - id: authenticated-probe
+        status: timeout
+        command_redacted: gemini -p '<synthetic probe>' --output-format text
+        doctor_capabilities: "-p, --output-format"
+        duration_ms: 5016
+        response_chars: 0
+        response_format: text
+        marker_verified: false
+        adapter_behavior: ProviderError after process-group termination
+        timeout_seconds: 5
+      - id: authenticated-probe-repeat
+        status: not-run
+        reason: first authenticated probe timed out
+  - id: claude
+    configured_command: claude
+    status: partial
+    versions:
+      - observed: 2.1.273
+        operating_system: Linux
+        python_version: 3.13.14
+        verification_date: 2026-09-19
+        authentication_method: pre-authenticated-local-cli-session
+    cases:
+      - id: success-repeat-1
+        status: passed
+        command_redacted: claude -p '<synthetic probe>' --output-format text
+        doctor_capabilities: "-p"
+        exit_status: 0
+        duration_ms: 8528
+        response_chars: 22
+        response_format: text
+        marker_verified: true
+      - id: success-repeat-2
+        status: passed
+        command_redacted: claude -p '<synthetic probe>' --output-format text
+        doctor_capabilities: "-p"
+        exit_status: 0
+        duration_ms: 3677
+        response_chars: 22
+        response_format: text
+        marker_verified: true
+  - id: codex
+    configured_command: codex
+    status: partial
+    versions:
+      - observed: 0.154.0
+        operating_system: Linux
+        python_version: 3.13.14
+        verification_date: 2026-09-19
+        authentication_method: pre-authenticated-local-cli-session
+    cases:
+      - id: success-repeat-1
+        status: passed
+        command_redacted: codex exec '<synthetic probe>'
+        doctor_capabilities: exec
+        exit_status: 0
+        duration_ms: 5599
+        response_chars: 22
+        response_format: text
+        marker_verified: true
+        stderr_present: true
+      - id: success-repeat-2
+        status: passed
+        command_redacted: codex exec '<synthetic probe>'
+        doctor_capabilities: exec
+        exit_status: 0
+        duration_ms: 4488
+        response_chars: 22
+        response_format: text
+        marker_verified: true
+        stderr_present: true
+  - id: copilot
+    configured_command: copilot
+    status: out-of-scope
+    versions: []
+    cases: []
+case_statuses:
+  - passed
+  - failed
+  - blocked-authentication
+  - blocked-quota
+  - incompatible
+  - not-run
+  - timeout
+  - unavailable-not-installed
+  - out-of-scope
+  - deferred-next-stage
+required_evidence:
+  - operating_system
+  - python_version
+  - cli_version
+  - authentication_method
+  - command_redacted
+  - doctor_capabilities
+  - exit_status
+  - duration_ms
+  - response_chars
+  - response_format
+  - timeout_behavior
+  - failure_behavior
+  - output_limit_behavior
+  - session_expiry_behavior
+  - quota_behavior
+  - rollback_procedure
+  - known_limitations

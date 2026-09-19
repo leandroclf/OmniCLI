@@ -10,6 +10,9 @@ The complete post-validation execution sequence is documented in the
 [production transition plan](plano-transicao-producao.md). It must be read
 before promoting the tool beyond a controlled beta.
 
+The current gate-by-gate evidence is tracked in
+[production-transition-status.md](production-transition-status.md).
+
 ## Security controls implemented
 
 - Run identifiers are restricted to safe names and remain inside the workspace.

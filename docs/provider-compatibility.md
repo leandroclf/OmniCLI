@@ -88,3 +88,16 @@ do Copilot CLI também pode exigir Node.js 22+ em instalações npm recentes.
 Não fixe versões dinâmicas de provedores no código do OmniCLI. O manifesto de
 cada execução registra a versão observada, permitindo investigar regressões sem
 transformar o projeto em instalador de quatro ecossistemas diferentes.
+
+A matriz operacional versionada está em
+[`provider-compatibility-matrix.yaml`](provider-compatibility-matrix.yaml). Ela
+registra resultados parciais e mantém qualquer cenário não executado como
+pendente, sempre com evidência redigida e sem credenciais persistidas.
+
+O Copilot CLI não faz parte do escopo desta release e não será instalado ou
+configurado. A ausência dele não bloqueia a validação de Claude e Codex, que
+são os provedores selecionados para o pipeline atual.
+
+Para esta release, o escopo oficial de produção foi reduzido a **Claude Code e
+Codex CLI**. Gemini permanece documentado como `deferred-next-stage` e será
+reavaliado em uma etapa posterior, após estabilização do provedor.

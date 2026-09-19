@@ -37,3 +37,8 @@ risk coverage, decision traceability, and usefulness to a human reviewer.
 
 The benchmark should be run in shadow mode before changing score thresholds.
 Do not use a single numeric score as a substitute for human evaluation.
+
+The versioned case set and rubric are maintained in
+[`benchmarks/human-quality-v1.yaml`](benchmarks/human-quality-v1.yaml). It is
+prepared for execution, but remains explicitly marked
+`prepared-not-executed` until developers review real proposals.

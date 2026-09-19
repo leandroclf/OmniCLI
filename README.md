@@ -132,7 +132,9 @@ pipeline:
 
 `min_score` is a completeness signal, not a promise of correctness. Hard gates block automatic acceptance when the output declares unresolved critical contradictions or contains known unsafe instruction markers. Every refined run records `quality_history`, `route_history`, `steps_used`, `calls_used`, `passes_completed`, `best_quality_score`, `graph_version`, and `termination_reason` in its manifest. A run can end by reaching the threshold, stabilizing, reaching a bound, or remaining blocked; human review is still required.
 
-See [omnicli.example.yaml](omnicli.example.yaml) to customize the stages and providers.
+The production validation scope for this release is Claude Code and Codex CLI.
+Gemini is deferred to a later stage, and Copilot is out of scope. See
+[omnicli.example.yaml](omnicli.example.yaml) to customize the stages and providers.
 
 ### Offline verification
 

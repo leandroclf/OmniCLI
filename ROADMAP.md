@@ -28,7 +28,7 @@ The roadmap protects OmniCLI's core idea: improve human–AI communication throu
 - [x] Deterministic provider contract fixtures and synthetic quality evaluation.
 - [x] Provider-free planning, offline diagnostics and JSON run inspection.
 - [x] Atomic stage artifacts and bounded subprocess failure laboratory.
-- [ ] Run metrics for latency, failures, retries, and context growth.
+- [x] Run metrics for latency, failures, retries, and context growth.
 - [ ] Compatibility matrix generated from opt-in provider contract tests across pinned provider versions.
 
 ## 0.5 — Extension ecosystem

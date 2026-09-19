@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/leandroclf/OmniCLI/transition-report.schema.json",
+  "title": "OmniCLI transition evidence report",
+  "type": "object",
+  "required": ["report_version", "generated_at", "authenticated_provider_compatibility", "human_quality_benchmark"],
+  "properties": {
+    "report_version": {"const": "transition-report-v1"},
+    "generated_at": {"type": "string", "format": "date-time"},
+    "authenticated_provider_compatibility": {"enum": ["passed", "failed", "not-tested", "partial"]},
+    "human_quality_benchmark": {"enum": ["passed", "failed", "not-tested", "partial"]},
+    "providers": {"type": "array", "items": {"type": "object"}},
+    "benchmark": {"type": "object"},
+    "critical_failures": {"type": "array", "items": {"type": "string"}},
+    "limitations": {"type": "array", "items": {"type": "string"}}
+  },
+  "additionalProperties": true
+}
