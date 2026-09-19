@@ -27,14 +27,15 @@ O OmniCLI coordena CLIs já instaladas e autenticadas no ambiente do desenvolved
 
 As ferramentas são executadas com as permissões do usuário atual. O OmniCLI não deve ser considerado um sandbox de segurança.
 
-## Instalação para desenvolvimento
+## Quickstart oficial
 
 ```bash
-python -m venv .venv
-source .venv/bin/activate
-python -m pip install --upgrade pip
-python -m pip install -e '.[dev]'
+bash scripts/bootstrap.sh --apply --check
 ```
+
+Esse é o único caminho recomendado para preparar o ambiente local. O bootstrap usa um ambiente virtual, não usa `sudo`, não instala CLIs de provedores e não inicia chamadas de IA automaticamente.
+
+Consulte o [guia de bootstrap](docs/bootstrap.md) para configuração de caminhos, diagnóstico e execução controlada.
 
 ## Diagnóstico
 
@@ -46,7 +47,7 @@ O comando informa quais comandos estão disponíveis e tenta consultar suas vers
 
 ## Primeira execução
 
-Use a configuração padrão:
+Depois de instalar e autenticar as CLIs desejadas, use a configuração padrão:
 
 ```bash
 omnicli conceive \
@@ -122,10 +123,9 @@ mypy
 ## Roadmap
 
 1. Estabilizar adaptadores e compatibilidade por versão.
-2. Adicionar retomada explícita de execuções interrompidas.
-3. Criar validadores de documentos por pipeline.
-4. Implementar geração de código em workspace temporário com aprovação humana.
-5. Evoluir para autocorreção controlada por patches e testes.
+2. Criar validadores de documentos por pipeline.
+3. Implementar geração de código em workspace temporário com aprovação humana.
+4. Evoluir para autocorreção controlada por patches e testes.
 
 ## Licença
 

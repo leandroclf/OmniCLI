@@ -9,7 +9,9 @@ dist/
 build/
 *.egg-info/
 .venv/
+.venv*/
 venv/
 .omnicli_workspace/
+omnicli.yaml
 .env
 .DS_Store
