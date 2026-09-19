@@ -19,6 +19,9 @@ Enquanto muitos agentes priorizam escrever código, o OmniCLI começa pelo probl
 
 O projeto está em fase alpha. Comece com conteúdo não sensível e revise toda saída gerada.
 
+Veja a [galeria da interface](interface.md) para exemplos visuais dos comandos,
+do diagnóstico e do bootstrap.
+
 ## Instalação recomendada
 
 Requisitos: Linux, Python 3.10+ e as CLIs exigidas pelo pipeline.

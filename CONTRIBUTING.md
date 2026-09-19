@@ -27,6 +27,16 @@ python -m pip check
 python -m build
 ```
 
+When changing public CLI commands, options, or terminal messages, regenerate the
+documentation screenshots and review [docs/interface.md](docs/interface.md):
+
+```bash
+bash scripts/generate-doc-screenshots.sh
+```
+
+Do not include real prompts, credentials, private provider output, or terminal
+paths containing personal data in screenshots.
+
 Tests that call paid or authenticated providers must be opt-in and clearly labeled. The default test suite must remain deterministic and offline.
 
 ## Design rules

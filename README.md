@@ -11,7 +11,7 @@ OmniCLI is a local, configurable orchestrator for authenticated command-line AI 
 
 > OmniCLI does not promise “free AI.” It does not require its own API keys, but every provider remains subject to its subscription, quota, licensing, privacy, and acceptable-use terms.
 
-[Leia em Português](docs/README.pt-BR.md) · [Architecture](docs/architecture.md) · [Provider compatibility](docs/provider-compatibility.md) · [Research](docs/research/landscape.md) · [Roadmap](ROADMAP.md)
+[Leia em Português](docs/README.pt-BR.md) · [Interface screenshots](docs/interface.md) · [Architecture](docs/architecture.md) · [Provider compatibility](docs/provider-compatibility.md) · [Research](docs/research/landscape.md) · [Roadmap](ROADMAP.md)
 
 ## Why OmniCLI?
 

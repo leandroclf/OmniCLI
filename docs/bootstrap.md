@@ -77,6 +77,10 @@ bash scripts/bootstrap.sh --apply --check
 
 O script aceita caminhos relativos e os resolve a partir da raiz do repositório.
 
+Para uma visão visual dos comandos disponíveis, consulte a
+[galeria da interface](interface.md). As capturas podem ser regeneradas com
+`bash scripts/generate-doc-screenshots.sh`.
+
 ## O que o bootstrap não faz
 
 O bootstrap não:
