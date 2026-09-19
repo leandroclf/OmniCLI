@@ -99,7 +99,9 @@ class Workspace:
             raise
 
     def save_manifest(self, manifest: RunManifest) -> None:
-        manifest.updated_at = datetime.now(timezone.utc)
+        now = datetime.now(timezone.utc)
+        manifest.updated_at = now
+        manifest.refresh_metrics(now)
         payload = json.dumps(manifest.model_dump(mode="json"), indent=2, ensure_ascii=False) + "\n"
         with self.lock():
             fd, temporary_name = tempfile.mkstemp(prefix=".manifest-", suffix=".tmp", dir=self.path)

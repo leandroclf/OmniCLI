@@ -46,6 +46,11 @@ def test_pipeline_creates_final_document_and_artifacts(tmp_path: Path) -> None:
     assert workspace.load_manifest().input_file is None
     assert workspace.load_manifest().input_sha256
     assert workspace.load_manifest().calls_used == len(DEFAULT_CONFIG.pipeline.stages)
+    metrics = workspace.load_manifest().metrics
+    assert metrics.total_stage_duration_ms >= 0
+    assert metrics.prompt_chars > 0
+    assert metrics.output_chars > 0
+    assert metrics.max_context_chars >= metrics.prompt_chars // len(DEFAULT_CONFIG.pipeline.stages)
     assert report.score >= 50
 
 

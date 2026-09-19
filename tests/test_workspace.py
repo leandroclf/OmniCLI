@@ -3,7 +3,7 @@ from pathlib import Path
 import pytest
 
 from omnicli.exceptions import WorkspaceError
-from omnicli.models import RunManifest, StageStatus
+from omnicli.models import RunManifest, StageResult, StageStatus
 from omnicli.workspace import Workspace
 
 
@@ -53,3 +53,30 @@ def test_workspace_rejects_future_manifest_schema(tmp_path: Path) -> None:
 
     with pytest.raises(WorkspaceError, match="schema_version=99"):
         workspace.load_manifest()
+
+
+def test_manifest_metrics_are_derived_from_stage_records(tmp_path: Path) -> None:
+    workspace = Workspace(tmp_path, run_id="run-metrics")
+    manifest = RunManifest(run_id="run-metrics", status=StageStatus.RUNNING)
+    manifest.stages.append(
+        StageResult(
+            stage="review",
+            provider="test",
+            role="Reviewer",
+            status=StageStatus.COMPLETED,
+            loop=1,
+            attempts=2,
+            prompt_chars=10,
+            context_chars=10,
+            output_chars=20,
+            duration_ms=5,
+        )
+    )
+    workspace.save_manifest(manifest)
+
+    metrics = workspace.load_manifest().metrics
+    assert metrics.total_stage_duration_ms == 5
+    assert metrics.retry_count == 1
+    assert metrics.prompt_chars == 10
+    assert metrics.output_chars == 20
+    assert metrics.failed_stage_count == 0

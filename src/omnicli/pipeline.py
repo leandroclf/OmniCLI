@@ -91,6 +91,8 @@ class PipelineRunner:
             loop=loop,
             prompt_file=str(prompt_path.relative_to(workspace.path)),
             prompt_sha256=hashlib.sha256(prompt.encode("utf-8")).hexdigest(),
+            prompt_chars=len(prompt),
+            context_chars=len(prompt),
         )
         self.log(f"loop={loop} stage={stage.name} provider={stage.provider}")
         last_error: str | None = None

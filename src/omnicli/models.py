@@ -142,10 +142,25 @@ class StageResult(BaseModel):
     error: str | None = None
     provider_version: str | None = None
     output_chars: int = 0
+    prompt_chars: int = 0
+    context_chars: int = 0
     prompt_sha256: str | None = None
     output_sha256: str | None = None
     attempts: int = 0
     duration_ms: int | None = None
+
+
+class RunMetrics(BaseModel):
+    """Bounded, local metrics useful for pilot and release evaluation."""
+
+    elapsed_ms: int = 0
+    total_stage_duration_ms: int = 0
+    failed_stage_count: int = 0
+    retry_count: int = 0
+    prompt_chars: int = 0
+    output_chars: int = 0
+    max_context_chars: int = 0
+    context_growth_chars: int = 0
 
 
 class RunManifest(BaseModel):
@@ -183,3 +198,20 @@ class RunManifest(BaseModel):
     quality_evaluation_version: str | None = None
     best_output_file: str | None = None
     termination_reason: TerminationReason | None = None
+    metrics: RunMetrics = Field(default_factory=RunMetrics)
+
+    def refresh_metrics(self, now: datetime | None = None) -> None:
+        """Recompute metrics from the auditable stage records."""
+        current = now or utc_now()
+        contexts = [stage.context_chars for stage in self.stages if stage.context_chars > 0]
+        first_context = contexts[0] if contexts else 0
+        self.metrics = RunMetrics(
+            elapsed_ms=max(0, int((current - self.created_at).total_seconds() * 1000)),
+            total_stage_duration_ms=sum(stage.duration_ms or 0 for stage in self.stages),
+            failed_stage_count=sum(stage.status == StageStatus.FAILED for stage in self.stages),
+            retry_count=sum(max(0, stage.attempts - 1) for stage in self.stages),
+            prompt_chars=sum(stage.prompt_chars for stage in self.stages),
+            output_chars=sum(stage.output_chars for stage in self.stages),
+            max_context_chars=max(contexts, default=0),
+            context_growth_chars=max(contexts, default=0) - first_context,
+        )
