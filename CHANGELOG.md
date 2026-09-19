@@ -1,5 +1,13 @@
 # Changelog
 
+## Unreleased
+
+- Added aggregated run metrics for duration, failures, retries, output volume and context growth.
+- Added release checksums and CycloneDX SBOM generation to the release workflow.
+- Added a gate-by-gate production transition status document that keeps authenticated-provider and human-benchmark evidence explicit.
+- Adjusted the Codex stderr budget for verbose operational output without changing stdout or prompt limits.
+- Restricted the production-validation default pipeline to Claude Code and Codex CLI; Gemini is deferred to a later stage.
+
 All notable changes to this project will be documented in this file. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project intends to follow [Semantic Versioning](https://semver.org/).
 
 ## [0.3.0] - 2026-09-19

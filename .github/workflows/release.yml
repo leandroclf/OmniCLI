@@ -15,10 +15,15 @@ jobs:
       - uses: actions/setup-python@v7
         with:
           python-version: "3.12"
-      - run: python -m pip install build
+      - run: python -m pip install build pip-audit
       - run: python -m build
       - run: python -m pip install dist/*.whl
       - run: omnicli --help
+      - name: Verify package and generate release evidence
+        run: |
+          python -m pip check
+          python -m pip_audit --format cyclonedx-json --output dist/omnicli-${GITHUB_REF_NAME#v}.sbom.json
+          sha256sum dist/* > dist/SHA256SUMS
       - name: Create GitHub release
         env:
           GH_TOKEN: ${{ github.token }}
