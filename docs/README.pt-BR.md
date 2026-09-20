@@ -20,6 +20,11 @@ Enquanto muitos agentes priorizam escrever código, o OmniCLI começa pelo probl
 O projeto está em beta controlado. Use primeiro em pilotos técnicos com conteúdo
 revisado e não sensível; o OmniCLI não é um sandbox.
 
+Para entender como o OmniCLI entra no processo de engenharia, consulte o guia de
+[uso no fluxo de engenharia](fluxo-engenharia.md). Ele explica o benefício real,
+o modo de uso, os casos de uso, os artefatos que podem ser derivados e os limites
+atuais da ferramenta.
+
 Veja a [galeria da interface](interface.md) para exemplos visuais dos comandos,
 do diagnóstico e do bootstrap.
 
