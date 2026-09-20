@@ -1,0 +1,27 @@
+result_version: human-quality-result-v1
+benchmark_version: human-quality-v1
+case_id: legacy-architecture
+blind_run_id: case-07-legacy-architecture
+evaluator_id: codex-ai-review
+review_mode: ai-assisted-not-human
+reviewed_at: '2026-09-19'
+review_time_minutes: 8
+artifact_refs:
+  manifest: artifacts/benchmark/human-quality-v1/runs/case-07-legacy-architecture/blinded/manifest.json
+  final_output: artifacts/benchmark/human-quality-v1/runs/case-07-legacy-architecture/blinded/proposal.md
+  stage_outputs: artifacts/benchmark/human-quality-v1/runs/case-07-legacy-architecture/blinded/
+  prompt_artifacts: hashes-only-in-blinded-manifest
+  config_fingerprint: recorded-outside-blinded-package
+dimensions:
+  - {id: completeness, score: 4, evidence: 'Cobre migração incremental, compatibilidade, observabilidade, rollback, riscos e critérios de aceite.'}
+  - {id: technical_coherence, score: 4, evidence: 'Propõe fronteiras graduais e coexistência controlada sem depender de reescrita total.'}
+  - {id: factual_discipline, score: 4, evidence: 'Distingue fatos do legado, hipóteses de migração e decisões que precisam de inventário.'}
+  - {id: risk_security, score: 4, evidence: 'Trata interrupção, compatibilidade, dados, rollback, telemetria e risco operacional.'}
+  - {id: decision_traceability, score: 4, evidence: 'Relaciona cada etapa a evidência do legado e a critérios de avanço ou reversão.'}
+  - {id: developer_utility, score: 4, evidence: 'Fornece uma sequência implementável de descoberta, estrangulamento e migração incremental.'}
+critical_failures: []
+observations:
+  - 'Evita a falha crítica de recomendar reescrita total sem transição.'
+  - 'Ressalva: os gates precisam de valores de SLO e mapa de dependências reais.'
+disagreements: []
+decision: approved-with-reservations

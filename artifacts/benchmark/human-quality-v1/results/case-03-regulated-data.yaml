@@ -1,0 +1,27 @@
+result_version: human-quality-result-v1
+benchmark_version: human-quality-v1
+case_id: regulated-data
+blind_run_id: case-03-regulated-data
+evaluator_id: codex-ai-review
+review_mode: ai-assisted-not-human
+reviewed_at: '2026-09-19'
+review_time_minutes: 8
+artifact_refs:
+  manifest: artifacts/benchmark/human-quality-v1/runs/case-03-regulated-data/blinded/manifest.json
+  final_output: artifacts/benchmark/human-quality-v1/runs/case-03-regulated-data/blinded/proposal.md
+  stage_outputs: artifacts/benchmark/human-quality-v1/runs/case-03-regulated-data/blinded/
+  prompt_artifacts: hashes-only-in-blinded-manifest
+  config_fingerprint: recorded-outside-blinded-package
+dimensions:
+  - {id: completeness, score: 4, evidence: 'Cobre fluxo de dados, acesso, minimização, retenção, auditoria, criptografia, riscos e aceite.'}
+  - {id: technical_coherence, score: 4, evidence: 'As fronteiras de ingestão, armazenamento, processamento e descarte são compatíveis entre si.'}
+  - {id: factual_discipline, score: 4, evidence: 'Distingue obrigação regulatória confirmada de recomendação e exige revisão jurídica.'}
+  - {id: risk_security, score: 4, evidence: 'Prioriza exposição em logs, acesso mínimo, segregação, retenção e incidentes sem prometer conformidade automática.'}
+  - {id: decision_traceability, score: 4, evidence: 'Pendências e critérios ligam controles de proteção às decisões de negócio e governança.'}
+  - {id: developer_utility, score: 4, evidence: 'Fornece controles implementáveis e verificações para uma primeira entrega segura.'}
+critical_failures: []
+observations:
+  - 'A proposta evita tratar dados de saúde como requisito técnico comum.'
+  - 'Ressalva: a aprovação de produção exige validação jurídica e de segurança independente.'
+disagreements: []
+decision: approved-with-reservations

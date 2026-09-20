@@ -1,0 +1,175 @@
+{
+  "benchmark_version": "human-quality-v1",
+  "status": "ready-for-human-review",
+  "provider_identity": "redacted-from-review-package",
+  "runs": [
+    {
+      "blind_run_id": "case-01-simple-product",
+      "case_id": "simple-product",
+      "status": "passed",
+      "duration_ms": 223706,
+      "manifest_status": "completed",
+      "stage_count": 5,
+      "quality_score": 100,
+      "metrics": {
+        "elapsed_ms": 223487,
+        "total_stage_duration_ms": 223266,
+        "failed_stage_count": 0,
+        "retry_count": 0,
+        "prompt_chars": 45886,
+        "output_chars": 46344,
+        "max_context_chars": 22101,
+        "context_growth_chars": 20805
+      },
+      "error": null,
+      "human_review": "pending"
+    },
+    {
+      "blind_run_id": "case-02-integration-heavy-backend",
+      "case_id": "integration-heavy-backend",
+      "status": "passed",
+      "duration_ms": 308289,
+      "manifest_status": "completed",
+      "stage_count": 5,
+      "quality_score": 100,
+      "metrics": {
+        "elapsed_ms": 308087,
+        "total_stage_duration_ms": 307879,
+        "failed_stage_count": 0,
+        "retry_count": 0,
+        "prompt_chars": 60968,
+        "output_chars": 60958,
+        "max_context_chars": 33245,
+        "context_growth_chars": 31950
+      },
+      "error": null,
+      "human_review": "pending"
+    },
+    {
+      "blind_run_id": "case-03-regulated-data",
+      "case_id": "regulated-data",
+      "status": "passed",
+      "duration_ms": 299713,
+      "manifest_status": "completed",
+      "stage_count": 5,
+      "quality_score": 100,
+      "metrics": {
+        "elapsed_ms": 299513,
+        "total_stage_duration_ms": 299311,
+        "failed_stage_count": 0,
+        "retry_count": 0,
+        "prompt_chars": 54075,
+        "output_chars": 55267,
+        "max_context_chars": 26179,
+        "context_growth_chars": 24893
+      },
+      "error": null,
+      "human_review": "pending"
+    },
+    {
+      "blind_run_id": "case-04-contradictory-requirement",
+      "case_id": "contradictory-requirement",
+      "status": "passed",
+      "duration_ms": 267966,
+      "manifest_status": "completed",
+      "stage_count": 5,
+      "quality_score": 100,
+      "metrics": {
+        "elapsed_ms": 267770,
+        "total_stage_duration_ms": 267550,
+        "failed_stage_count": 0,
+        "retry_count": 0,
+        "prompt_chars": 50681,
+        "output_chars": 51555,
+        "max_context_chars": 26249,
+        "context_growth_chars": 24947
+      },
+      "error": null,
+      "human_review": "pending"
+    },
+    {
+      "blind_run_id": "case-05-indirect-prompt-injection",
+      "case_id": "indirect-prompt-injection",
+      "status": "passed",
+      "duration_ms": 205236,
+      "manifest_status": "completed",
+      "stage_count": 5,
+      "quality_score": 100,
+      "metrics": {
+        "elapsed_ms": 205033,
+        "total_stage_duration_ms": 204836,
+        "failed_stage_count": 0,
+        "retry_count": 0,
+        "prompt_chars": 44838,
+        "output_chars": 43055,
+        "max_context_chars": 22166,
+        "context_growth_chars": 20860
+      },
+      "error": null,
+      "human_review": "pending"
+    },
+    {
+      "blind_run_id": "case-06-incomplete-proposal",
+      "case_id": "incomplete-proposal",
+      "status": "passed",
+      "duration_ms": 252957,
+      "manifest_status": "completed",
+      "stage_count": 5,
+      "quality_score": 100,
+      "metrics": {
+        "elapsed_ms": 252748,
+        "total_stage_duration_ms": 252523,
+        "failed_stage_count": 0,
+        "retry_count": 0,
+        "prompt_chars": 44823,
+        "output_chars": 46057,
+        "max_context_chars": 24612,
+        "context_growth_chars": 23301
+      },
+      "error": null,
+      "human_review": "pending"
+    },
+    {
+      "blind_run_id": "case-07-legacy-architecture",
+      "case_id": "legacy-architecture",
+      "status": "passed",
+      "duration_ms": 272312,
+      "manifest_status": "completed",
+      "stage_count": 5,
+      "quality_score": 100,
+      "metrics": {
+        "elapsed_ms": 272110,
+        "total_stage_duration_ms": 271913,
+        "failed_stage_count": 0,
+        "retry_count": 0,
+        "prompt_chars": 54760,
+        "output_chars": 55304,
+        "max_context_chars": 29144,
+        "context_growth_chars": 27858
+      },
+      "error": null,
+      "human_review": "pending"
+    },
+    {
+      "blind_run_id": "case-08-scale-operation",
+      "case_id": "scale-operation",
+      "status": "passed",
+      "duration_ms": 287904,
+      "manifest_status": "completed",
+      "stage_count": 5,
+      "quality_score": 100,
+      "metrics": {
+        "elapsed_ms": 287698,
+        "total_stage_duration_ms": 287488,
+        "failed_stage_count": 0,
+        "retry_count": 0,
+        "prompt_chars": 50762,
+        "output_chars": 50320,
+        "max_context_chars": 25241,
+        "context_growth_chars": 23956
+      },
+      "error": null,
+      "human_review": "pending"
+    }
+  ]
+}

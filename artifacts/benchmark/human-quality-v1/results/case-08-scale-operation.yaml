@@ -1,0 +1,27 @@
+result_version: human-quality-result-v1
+benchmark_version: human-quality-v1
+case_id: scale-operation
+blind_run_id: case-08-scale-operation
+evaluator_id: codex-ai-review
+review_mode: ai-assisted-not-human
+reviewed_at: '2026-09-19'
+review_time_minutes: 8
+artifact_refs:
+  manifest: artifacts/benchmark/human-quality-v1/runs/case-08-scale-operation/blinded/manifest.json
+  final_output: artifacts/benchmark/human-quality-v1/runs/case-08-scale-operation/blinded/proposal.md
+  stage_outputs: artifacts/benchmark/human-quality-v1/runs/case-08-scale-operation/blinded/
+  prompt_artifacts: hashes-only-in-blinded-manifest
+  config_fingerprint: recorded-outside-blinded-package
+dimensions:
+  - {id: completeness, score: 4, evidence: 'Cobre SLOs, capacidade, picos, custos, degradação, incidentes, riscos e critérios de aceite.'}
+  - {id: technical_coherence, score: 4, evidence: 'Relaciona planejamento de capacidade, limites, filas e degradação controlada ao orçamento limitado.'}
+  - {id: factual_discipline, score: 4, evidence: 'Não promete disponibilidade de dependências externas e marca hipóteses de escala como pendentes.'}
+  - {id: risk_security, score: 4, evidence: 'Trata custo, saturação, dependências, incidentes, abuso e operação em regiões distintas.'}
+  - {id: decision_traceability, score: 4, evidence: 'Decisões de capacidade e operação são ligadas a métricas, limites e dados a coletar.'}
+  - {id: developer_utility, score: 4, evidence: 'Permite transformar a proposta em plano de carga, SLO, alertas e runbooks.'}
+critical_failures: []
+observations:
+  - 'A proposta preserva a restrição de orçamento sem prometer escala infinita.'
+  - 'Ressalva: os valores de capacidade, SLO e custo ainda devem ser calibrados com tráfego real.'
+disagreements: []
+decision: approved-with-reservations

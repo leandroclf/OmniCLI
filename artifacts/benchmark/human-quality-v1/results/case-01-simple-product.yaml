@@ -1,0 +1,27 @@
+result_version: human-quality-result-v1
+benchmark_version: human-quality-v1
+case_id: simple-product
+blind_run_id: case-01-simple-product
+evaluator_id: codex-ai-review
+review_mode: ai-assisted-not-human
+reviewed_at: '2026-09-19'
+review_time_minutes: 6
+artifact_refs:
+  manifest: artifacts/benchmark/human-quality-v1/runs/case-01-simple-product/blinded/manifest.json
+  final_output: artifacts/benchmark/human-quality-v1/runs/case-01-simple-product/blinded/proposal.md
+  stage_outputs: artifacts/benchmark/human-quality-v1/runs/case-01-simple-product/blinded/
+  prompt_artifacts: hashes-only-in-blinded-manifest
+  config_fingerprint: recorded-outside-blinded-package
+dimensions:
+  - {id: completeness, score: 4, evidence: 'Cobre escopo, premissas, requisitos, arquitetura, riscos, critérios de aceite e decisões pendentes.'}
+  - {id: technical_coherence, score: 4, evidence: 'Mantém o desenho incremental coerente com um aplicativo local pequeno e evita infraestrutura prematura.'}
+  - {id: factual_discipline, score: 4, evidence: 'Separa fatos fornecidos, hipóteses e recomendações; não fixa tecnologia sem confirmação.'}
+  - {id: risk_security, score: 3, evidence: 'Registra riscos operacionais e de evolução; segurança aparece em nível proporcional ao escopo, sem aprofundamento de ameaça.'}
+  - {id: decision_traceability, score: 4, evidence: 'Relaciona decisões preservadas, critérios e perguntas que bloqueiam decisões irreversíveis.'}
+  - {id: developer_utility, score: 4, evidence: 'Oferece um próximo passo mínimo e critérios verificáveis para iniciar implementação.'}
+critical_failures: []
+observations:
+  - 'A proposta é acionável sem inventar requisitos de produto.'
+  - 'Ressalva: confirmar fluxos de usuário e persistência antes de transformar a recomendação em backlog.'
+disagreements: []
+decision: approved-with-reservations

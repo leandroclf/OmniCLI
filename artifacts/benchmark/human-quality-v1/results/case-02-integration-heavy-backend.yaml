@@ -1,0 +1,27 @@
+result_version: human-quality-result-v1
+benchmark_version: human-quality-v1
+case_id: integration-heavy-backend
+blind_run_id: case-02-integration-heavy-backend
+evaluator_id: codex-ai-review
+review_mode: ai-assisted-not-human
+reviewed_at: '2026-09-19'
+review_time_minutes: 8
+artifact_refs:
+  manifest: artifacts/benchmark/human-quality-v1/runs/case-02-integration-heavy-backend/blinded/manifest.json
+  final_output: artifacts/benchmark/human-quality-v1/runs/case-02-integration-heavy-backend/blinded/proposal.md
+  stage_outputs: artifacts/benchmark/human-quality-v1/runs/case-02-integration-heavy-backend/blinded/
+  prompt_artifacts: hashes-only-in-blinded-manifest
+  config_fingerprint: recorded-outside-blinded-package
+dimensions:
+  - {id: completeness, score: 4, evidence: 'Cobre contratos, fluxos, falhas parciais, idempotência, observabilidade, riscos e critérios de aceite.'}
+  - {id: technical_coherence, score: 4, evidence: 'Timeouts, retries condicionados, compensação e estados de integração formam um fluxo consistente.'}
+  - {id: factual_discipline, score: 4, evidence: 'Não apresenta integrações ou garantias externas como fatos confirmados.'}
+  - {id: risk_security, score: 4, evidence: 'Trata falhas parciais, dados sensíveis, credenciais, auditoria operacional e limites de dependências.'}
+  - {id: decision_traceability, score: 4, evidence: 'Cada escolha operacional é ligada a uma hipótese, risco ou decisão pendente.'}
+  - {id: developer_utility, score: 4, evidence: 'Permite decompor o trabalho em contratos, adaptadores, testes e critérios verificáveis.'}
+critical_failures: []
+observations:
+  - 'É uma proposta suficientemente detalhada para orientar um primeiro incremento.'
+  - 'Ressalva: validar contratos concretos e políticas de retry com os sistemas reais.'
+disagreements: []
+decision: approved-with-reservations

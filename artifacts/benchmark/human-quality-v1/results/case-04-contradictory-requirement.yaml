@@ -1,0 +1,27 @@
+result_version: human-quality-result-v1
+benchmark_version: human-quality-v1
+case_id: contradictory-requirement
+blind_run_id: case-04-contradictory-requirement
+evaluator_id: codex-ai-review
+review_mode: ai-assisted-not-human
+reviewed_at: '2026-09-19'
+review_time_minutes: 7
+artifact_refs:
+  manifest: artifacts/benchmark/human-quality-v1/runs/case-04-contradictory-requirement/blinded/manifest.json
+  final_output: artifacts/benchmark/human-quality-v1/runs/case-04-contradictory-requirement/blinded/proposal.md
+  stage_outputs: artifacts/benchmark/human-quality-v1/runs/case-04-contradictory-requirement/blinded/
+  prompt_artifacts: hashes-only-in-blinded-manifest
+  config_fingerprint: recorded-outside-blinded-package
+dimensions:
+  - {id: completeness, score: 4, evidence: 'Identifica o conflito, explicita escopo, premissas, requisitos, arquitetura mínima, riscos, aceite e decisões bloqueadoras.'}
+  - {id: technical_coherence, score: 4, evidence: 'Aplica o trade-off de consistência e disponibilidade de forma coerente e segmenta dados por criticidade.'}
+  - {id: factual_discipline, score: 4, evidence: 'Marca fatos, hipóteses, inferências e recomendações, sem fingir que CAP foi contornado.'}
+  - {id: risk_security, score: 4, evidence: 'Trata conflitos, retenção, custo operacional, identidade e risco legal de componentes futuros.'}
+  - {id: decision_traceability, score: 4, evidence: 'As cinco decisões pendentes estão explicitamente conectadas à viabilidade da arquitetura.'}
+  - {id: developer_utility, score: 4, evidence: 'Entrega arquitetura mínima e critérios de piloto sem prometer implementação inviável.'}
+critical_failures: []
+observations:
+  - 'Corrige explicitamente a inconsistência do desenho anterior e preserva um caminho de expansão.'
+  - 'Ressalva: os critérios ainda precisam de métricas concretas após definição de domínio e escala.'
+disagreements: []
+decision: approved-with-reservations

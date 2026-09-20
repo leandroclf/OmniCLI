@@ -1,0 +1,287 @@
+{
+  "schema_version": 1,
+  "run_id": "run-20260920-003322-3e4b7776ce14",
+  "created_at": "2026-09-20T00:33:22.953832Z",
+  "updated_at": "2026-09-20T00:37:35.702448Z",
+  "input_file": null,
+  "input_sha256": "0c15167e7ee2d0082ade795ffd5ee9ce660ebc75c2ed152d28614657a44fa4a7",
+  "final_output": "artifacts/benchmark/human-quality-v1/runs/case-06-incomplete-proposal/raw-proposal.md",
+  "output_target": "artifacts/benchmark/human-quality-v1/runs/case-06-incomplete-proposal/raw-proposal.md",
+  "status": "completed",
+  "current_loop": 1,
+  "total_loops": 1,
+  "stages": [
+    {
+      "stage": "discovery",
+      "provider": "claude",
+      "role": "Explorador de produto",
+      "status": "completed",
+      "loop": 1,
+      "started_at": "2026-09-20T00:33:22.969533Z",
+      "finished_at": "2026-09-20T00:33:41.833197Z",
+      "exit_code": 0,
+      "output_file": "01-01-discovery.md",
+      "prompt_file": "01-01-discovery.prompt.md",
+      "error": null,
+      "provider_version": "2.1.273 (Claude Code)",
+      "output_chars": 3149,
+      "prompt_chars": 1311,
+      "context_chars": 1311,
+      "prompt_sha256": "6150470f5cc2f3f3338df36904b8387d24c7ce3c9dfc90293928c582d45f1415",
+      "output_sha256": "f4b1404f33a6bf645dec84174e0655ebe6f57b8365d549eb08c498724dc3bbe5",
+      "attempts": 1,
+      "duration_ms": 18847
+    },
+    {
+      "stage": "critical-review",
+      "provider": "codex",
+      "role": "Revisor crítico",
+      "status": "completed",
+      "loop": 1,
+      "started_at": "2026-09-20T00:33:41.844318Z",
+      "finished_at": "2026-09-20T00:34:26.179272Z",
+      "exit_code": 0,
+      "output_file": "01-02-critical-review.md",
+      "prompt_file": "01-02-critical-review.prompt.md",
+      "error": null,
+      "provider_version": "codex-cli 0.154.0",
+      "output_chars": 6428,
+      "prompt_chars": 4434,
+      "context_chars": 4434,
+      "prompt_sha256": "7863cc6889c825b52269c77ddee265c0ad4f733c726d8cc747d15b4dd08c5389",
+      "output_sha256": "d8ec857229a98e8841dcad765fb5753c81f50b72c22b3e2b9fef73a1242a7df2",
+      "attempts": 1,
+      "duration_ms": 44293
+    },
+    {
+      "stage": "architecture",
+      "provider": "codex",
+      "role": "Arquiteto de soluções",
+      "status": "completed",
+      "loop": 1,
+      "started_at": "2026-09-20T00:34:26.189896Z",
+      "finished_at": "2026-09-20T00:36:20.653708Z",
+      "exit_code": 0,
+      "output_file": "01-03-architecture.md",
+      "prompt_file": "01-03-architecture.prompt.md",
+      "error": null,
+      "provider_version": "codex-cli 0.154.0",
+      "output_chars": 23330,
+      "prompt_chars": 7725,
+      "context_chars": 7725,
+      "prompt_sha256": "2cf4e96600fb21f15fe581954421fc5ada0296ee49bd91e3ead98738a0e9206d",
+      "output_sha256": "a5b3ad25316106a5e847cb823a5aa1175e2fcda2b80cb7079512373ff9695f19",
+      "attempts": 1,
+      "duration_ms": 114421
+    },
+    {
+      "stage": "feasibility",
+      "provider": "claude",
+      "role": "Revisor de viabilidade",
+      "status": "completed",
+      "loop": 1,
+      "started_at": "2026-09-20T00:36:20.664288Z",
+      "finished_at": "2026-09-20T00:36:55.405480Z",
+      "exit_code": 0,
+      "output_file": "01-04-feasibility.md",
+      "prompt_file": "01-04-feasibility.prompt.md",
+      "error": null,
+      "provider_version": "2.1.273 (Claude Code)",
+      "output_chars": 5458,
+      "prompt_chars": 24612,
+      "context_chars": 24612,
+      "prompt_sha256": "3ab3c8f7ab16dae10c336aad271b4d36514f6a307d95f774ee5a2f170f04ea53",
+      "output_sha256": "9d51367c879ea1a77df263ba5d044af8d1640c83482a781d4c3cb645e9bd2c64",
+      "attempts": 1,
+      "duration_ms": 34726
+    },
+    {
+      "stage": "master-proposal",
+      "provider": "claude",
+      "role": "Editor técnico",
+      "status": "completed",
+      "loop": 1,
+      "started_at": "2026-09-20T00:36:55.416290Z",
+      "finished_at": "2026-09-20T00:37:35.675141Z",
+      "exit_code": 0,
+      "output_file": "01-05-master-proposal.md",
+      "prompt_file": "01-05-master-proposal.prompt.md",
+      "error": null,
+      "provider_version": "2.1.273 (Claude Code)",
+      "output_chars": 7692,
+      "prompt_chars": 6741,
+      "context_chars": 6741,
+      "prompt_sha256": "a0baa0a170a62551f14b9c8c214e139369330ee5e6352844a395340a96e91e7e",
+      "output_sha256": "481641fed81307d3e2173171d6e419a1c7c55c67d818994081a7cc2b94039755",
+      "attempts": 1,
+      "duration_ms": 40236
+    }
+  ],
+  "config_snapshot": {
+    "pipeline": {
+      "name": "conception",
+      "stages": [
+        {
+          "name": "discovery",
+          "provider": "claude",
+          "role": "Explorador de produto",
+          "instruction": "Expanda a ideia inicial. Identifique problema, público-alvo, objetivos, funcionalidades e perguntas ainda não respondidas. Não trate hipóteses como fatos.",
+          "timeout_seconds": 300.0,
+          "max_retries": 1
+        },
+        {
+          "name": "critical-review",
+          "provider": "codex",
+          "role": "Revisor crítico",
+          "instruction": "Questione as premissas da proposta, procure contradições, riscos, excesso de escopo, dependências e decisões que precisam de validação humana. Sugira correções objetivas.",
+          "timeout_seconds": 300.0,
+          "max_retries": 1
+        },
+        {
+          "name": "architecture",
+          "provider": "codex",
+          "role": "Arquiteto de soluções",
+          "instruction": "Estruture uma arquitetura tecnicamente viável. Descreva componentes, fluxos, dados, integrações, requisitos não funcionais, segurança, observabilidade e plano de implementação.",
+          "timeout_seconds": 300.0,
+          "max_retries": 1
+        },
+        {
+          "name": "feasibility",
+          "provider": "claude",
+          "role": "Revisor de viabilidade",
+          "instruction": "Avalie a proposta arquitetural. Aponte custos, complexidade, riscos operacionais, limitações das ferramentas e alternativas mais simples quando forem adequadas.",
+          "timeout_seconds": 300.0,
+          "max_retries": 1
+        },
+        {
+          "name": "master-proposal",
+          "provider": "claude",
+          "role": "Editor técnico",
+          "instruction": "Consolide uma Proposta Mestra de Arquitetura. Inclua escopo, premissas, decisões, requisitos, arquitetura, riscos, critérios de aceite e uma seção de decisões pendentes.",
+          "timeout_seconds": 300.0,
+          "max_retries": 1
+        }
+      ],
+      "max_loops": 3,
+      "workspace": ".omnicli_workspace",
+      "output": "proposta.md",
+      "retain_prompt_content": false,
+      "input_retention": "hash-only",
+      "graph_version": "conception-v1",
+      "quality_loop": {
+        "enabled": false,
+        "min_score": 80,
+        "min_improvement": 3,
+        "stable_passes": 1,
+        "max_steps": 30,
+        "max_calls": 50,
+        "stop_on_quality": true
+      }
+    },
+    "providers": {
+      "claude": {
+        "command": "claude",
+        "args": [
+          "-p",
+          "{prompt}",
+          "--output-format",
+          "text"
+        ],
+        "enabled": true,
+        "version_args": [
+          "--version"
+        ],
+        "capability_args": [
+          "--help"
+        ],
+        "required_capabilities": [
+          "-p"
+        ],
+        "documentation_url": "https://code.claude.com/docs/en/cli-reference",
+        "installation_url": "https://code.claude.com/docs/en/setup",
+        "environment": {},
+        "environment_allowlist": [
+          "PATH",
+          "HOME",
+          "USER",
+          "TMPDIR",
+          "LANG",
+          "LC_ALL"
+        ],
+        "inherit_environment": false,
+        "max_prompt_chars": 200000,
+        "max_output_chars": 500000,
+        "max_stderr_chars": 20000
+      },
+      "codex": {
+        "command": "codex",
+        "args": [
+          "exec",
+          "{prompt}"
+        ],
+        "enabled": true,
+        "version_args": [
+          "--version"
+        ],
+        "capability_args": [
+          "--help"
+        ],
+        "required_capabilities": [
+          "exec"
+        ],
+        "documentation_url": "https://developers.openai.com/codex/cli",
+        "installation_url": "https://developers.openai.com/codex/cli",
+        "environment": {},
+        "environment_allowlist": [
+          "PATH",
+          "HOME",
+          "USER",
+          "TMPDIR",
+          "LANG",
+          "LC_ALL"
+        ],
+        "inherit_environment": false,
+        "max_prompt_chars": 200000,
+        "max_output_chars": 500000,
+        "max_stderr_chars": 100000
+      }
+    }
+  },
+  "config_fingerprint": "2f34e3ccedc7d195bf71df142baf12377b5b032cfbfc1e98fe6b324f7df0c66d",
+  "graph_version": "conception-v1",
+  "execution_mode": "legacy",
+  "current_stage": null,
+  "next_stage": null,
+  "steps_used": 5,
+  "calls_used": 5,
+  "passes_completed": 1,
+  "quality_score": 100,
+  "best_quality_score": null,
+  "quality_delta": null,
+  "quality_history": [],
+  "route_history": [],
+  "quality_warnings": [],
+  "quality_missing_concepts": [],
+  "quality_security_violations": [],
+  "quality_critical_contradictions": [],
+  "quality_evidence": [
+    "escopo",
+    "risco",
+    "critério",
+    "decis",
+    "headings:13"
+  ],
+  "quality_evaluation_version": "quality-v1",
+  "best_output_file": null,
+  "termination_reason": "completed",
+  "metrics": {
+    "elapsed_ms": 252748,
+    "total_stage_duration_ms": 252523,
+    "failed_stage_count": 0,
+    "retry_count": 0,
+    "prompt_chars": 44823,
+    "output_chars": 46057,
+    "max_context_chars": 24612,
+    "context_growth_chars": 23301
+  }
+}

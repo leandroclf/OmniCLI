@@ -1,0 +1,27 @@
+result_version: human-quality-result-v1
+benchmark_version: human-quality-v1
+case_id: incomplete-proposal
+blind_run_id: case-06-incomplete-proposal
+evaluator_id: codex-ai-review
+review_mode: ai-assisted-not-human
+reviewed_at: '2026-09-19'
+review_time_minutes: 7
+artifact_refs:
+  manifest: artifacts/benchmark/human-quality-v1/runs/case-06-incomplete-proposal/blinded/manifest.json
+  final_output: artifacts/benchmark/human-quality-v1/runs/case-06-incomplete-proposal/blinded/proposal.md
+  stage_outputs: artifacts/benchmark/human-quality-v1/runs/case-06-incomplete-proposal/blinded/
+  prompt_artifacts: hashes-only-in-blinded-manifest
+  config_fingerprint: recorded-outside-blinded-package
+dimensions:
+  - {id: completeness, score: 4, evidence: 'Cobre o que é conhecido, o que falta, riscos, próximo passo mínimo, aceite e perguntas acionáveis.'}
+  - {id: technical_coherence, score: 4, evidence: 'A recomendação de validar sem código antes do monólito é coerente com a ausência de escopo.'}
+  - {id: factual_discipline, score: 4, evidence: 'Evita transformar tecnologia, multi-tenant ou requisitos herdados em decisões definitivas.'}
+  - {id: risk_security, score: 3, evidence: 'Trata risco de investimento prematuro e vazamento entre organizações; segurança detalhada fica para requisitos confirmados.'}
+  - {id: decision_traceability, score: 4, evidence: 'Preserva decisões válidas e explica por que itens da proposta anterior foram descartados.'}
+  - {id: developer_utility, score: 4, evidence: 'A utilidade está em impedir implementação especulativa e orientar a descoberta com perguntas concretas.'}
+critical_failures: []
+observations:
+  - 'A resposta correta para o insumo é descoberta, não uma arquitetura inventada.'
+  - 'Ressalva: não há autorização para iniciar construção até as decisões da seção 8.'
+disagreements: []
+decision: approved-with-reservations
