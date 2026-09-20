@@ -39,6 +39,11 @@ The benchmark should be run in shadow mode before changing score thresholds.
 Do not use a single numeric score as a substitute for human evaluation.
 
 The versioned case set and rubric are maintained in
-[`benchmarks/human-quality-v1.yaml`](benchmarks/human-quality-v1.yaml). It is
-prepared for execution, but remains explicitly marked
-`prepared-not-executed` until developers review real proposals.
+[`benchmarks/human-quality-v1.yaml`](benchmarks/human-quality-v1.yaml). The
+eight cases were executed with synthetic prompts and their blinded artifacts
+are stored under `artifacts/benchmark/human-quality-v1/`. Human review remains
+pending; the committed result files are explicitly marked as
+`ai-assisted-not-human` and must not be reported as independent human evidence.
+
+The executable result format, audit requirements and blinded-result validator
+are documented in [`benchmarks/README.md`](benchmarks/README.md).

@@ -1,0 +1,46 @@
+result_version: human-quality-result-v1
+status: example-not-evidence
+benchmark_version: human-quality-v1
+case_id: simple-product
+blind_run_id: simple-product-run-001
+evaluator_id: evaluator-01
+reviewed_at: 2026-09-19T00:00:00Z
+review_time_minutes: 18
+artifact_refs:
+  manifest: /redacted/run/manifest.json
+  final_output: /redacted/run/proposal.md
+  stage_outputs:
+    - /redacted/run/01-01-discovery.md
+    - /redacted/run/01-02-critical-review.md
+    - /redacted/run/01-03-architecture.md
+    - /redacted/run/01-04-feasibility.md
+    - /redacted/run/01-05-master-proposal.md
+  prompt_artifacts:
+    visibility: hash-only
+    refs:
+      - /redacted/run/01-01-discovery.prompt.md
+  config_fingerprint: redacted-config-fingerprint
+dimensions:
+  - id: completeness
+    score: 3
+    evidence: Cobre escopo e aceite, mas precisa explicitar melhor as premissas.
+  - id: technical_coherence
+    score: 3
+    evidence: Componentes e fluxos são compatíveis com o produto simples.
+  - id: factual_discipline
+    score: 4
+    evidence: Distingue fatos fornecidos de hipóteses e recomendações.
+  - id: risk_security
+    score: 3
+    evidence: Cobre riscos principais, mas o procedimento de recuperação pode ser detalhado.
+  - id: decision_traceability
+    score: 3
+    evidence: Registra decisões pendentes e critérios de aceite.
+  - id: developer_utility
+    score: 4
+    evidence: Permite iniciar a descoberta técnica e lista próximos passos acionáveis.
+critical_failures: []
+observations:
+  - A proposta é útil para uma primeira discussão técnica.
+disagreements: []
+decision: approved-with-reservations
