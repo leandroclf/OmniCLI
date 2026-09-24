@@ -109,12 +109,21 @@ omnicli doctor --capabilities
 omnicli doctor --capabilities --json
 omnicli providers check --capabilities
 omnicli providers check --offline
+omnicli providers check --latest --json
 ```
 
 `doctor --capabilities` valida a configuração, executáveis obrigatórios, versões
 e marcadores mínimos da ajuda local sem gerar conteúdo. Consulte a
 [política de compatibilidade](provider-compatibility.md) para acompanhar as
 mudanças oficiais sem prometer suporte automático a toda feature nova.
+
+Antes de gerar uma proposta ou retomar uma execução, o OmniCLI compara as
+versões instaladas com metadados oficiais em cache por 12 horas e valida os
+comandos headless configurados. Uma atualização disponível gera aviso;
+`--require-latest` bloqueia o pipeline se uma versão estiver atrasada ou não
+puder ser confirmada. `providers check --latest --json` consulta o estado e
+retorna links oficiais. A atualização dos provedores continua sob controle do
+usuário e deve seguir o método original de instalação.
 
 ## Invocações padrão
 

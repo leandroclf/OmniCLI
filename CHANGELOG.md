@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- Check provider CLI versions, declared headless capabilities, and official
+  latest stable metadata before live pipeline runs; warn by default and provide
+  a strict `--require-latest` gate without silently updating user installations.
+
+## Unreleased
+
 - Added aggregated run metrics for duration, failures, retries, output volume and context growth.
 - Added release checksums and CycloneDX SBOM generation to the release workflow.
 - Added a gate-by-gate production transition status document that keeps authenticated-provider and human-benchmark evidence explicit.

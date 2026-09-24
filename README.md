@@ -79,7 +79,7 @@ The current default pipeline uses the documented headless interfaces of Claude C
 ```bash
 omnicli doctor [--json] [--skip-version] [--capabilities]
 omnicli doctor --offline --json
-omnicli providers check [--capabilities]
+omnicli providers check [--capabilities] [--latest] [--json]
 omnicli lab verify [--json]
 omnicli init omnicli.yaml
 omnicli conceive "My idea" --config omnicli.yaml
@@ -95,6 +95,14 @@ omnicli run resume RUN_ID --idea "The original idea"
 `doctor --capabilities` validates the configuration, required executables, provider versions, and documented help markers without generating content. See [provider compatibility](docs/provider-compatibility.md) for the update policy; a passing probe is not a guarantee that every vendor feature is supported.
 
 When provider authentication is unavailable, use `doctor --offline` for configuration-only validation and `omnicli lab verify` for deterministic local transport, failure-boundary and quality-regression checks. These commands explicitly do not claim authenticated-provider compatibility or human-evaluated quality.
+
+Before a live pipeline run, OmniCLI checks provider versions and the configured
+headless command markers, then compares installed versions with official
+release metadata cached for 12 hours. It warns when an update is available;
+`--require-latest` makes that check a gate. OmniCLI never replaces provider
+installations automatically. Run `omnicli providers check --latest --json` for
+current versions and official documentation/release links. See the
+[provider compatibility policy](docs/provider-compatibility.md).
 
 ## Pipeline model
 
