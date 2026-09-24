@@ -94,6 +94,9 @@ class ProviderConfig(BaseModel):
     required_capabilities: list[str] = Field(default_factory=list)
     documentation_url: str | None = None
     installation_url: str | None = None
+    latest_version_url: str | None = None
+    release_notes_url: str | None = None
+    update_command_hint: str | None = None
     environment: dict[str, str] = Field(default_factory=dict)
     environment_allowlist: list[str] = Field(
         default_factory=lambda: ["PATH", "HOME", "USER", "TMPDIR", "LANG", "LC_ALL"]

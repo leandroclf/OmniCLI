@@ -5,6 +5,10 @@ https://github.com/google-gemini/gemini-cli/blob/main/docs/cli/cli-reference.md
 https://github.com/google-gemini/gemini-cli#installation
 https://code.claude.com/docs/en/cli-reference
 https://code.claude.com/docs/en/setup
+https://registry.npmjs.org/@anthropic-ai%2Fclaude-code/latest
+https://github.com/anthropics/claude-code/releases
 https://developers.openai.com/codex/cli
+https://api.github.com/repos/openai/codex/releases/latest
+https://github.com/openai/codex/releases
 https://docs.github.com/en/copilot/concepts/agents/copilot-cli/about-copilot-cli
 https://docs.github.com/en/copilot/how-tos/copilot-cli/set-up-copilot-cli/install-copilot-cli

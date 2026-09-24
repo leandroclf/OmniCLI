@@ -17,6 +17,7 @@ from omnicli.exceptions import OmniCLIError
 from omnicli.lab import LabResult, run_provider_contract_lab, run_synthetic_evaluation
 from omnicli.pipeline import PipelineRunner
 from omnicli.planning import build_execution_plan
+from omnicli.provider_freshness import check_provider_freshness
 
 app = typer.Typer(help="Orquestrador local de ferramentas de IA via CLI.")
 providers_app = typer.Typer(help="Diagnóstico dos provedores configurados.")
@@ -50,6 +51,36 @@ def _runner(config_path: Path | None, verbose: bool, context: CodebaseContext | 
     return PipelineRunner(config, adapters, logger=logger, codebase_context=context)
 
 
+def _provider_preflight(config_path: Path | None, require_latest: bool, skip_latest_check: bool) -> None:
+    config = load_config(config_path)
+    report = diagnose(config, check_versions=True, check_capabilities=True)
+    if not report.ready:
+        raise OmniCLIError("Verificação local dos provedores falhou; execute `omnicli doctor --capabilities`.")
+    if skip_latest_check:
+        console.print("[yellow]Consulta de versões oficiais ignorada por opção.[/yellow]")
+        return
+    results = check_provider_freshness(config)
+    summaries = [f"{item.name} {item.installed_version or '?'}: {item.status}" for item in results]
+    console.print("CLIs: " + " | ".join(summaries))
+    for item in results:
+        if item.status == "update_available":
+            console.print(
+                f"[yellow]Atualização disponível para {item.name}: {item.latest_version}. "
+                f"{item.update_command_hint or 'Consulte o guia oficial de instalação.'}[/yellow]"
+            )
+            if item.release_notes_url:
+                console.print(f"Notas oficiais: {item.release_notes_url}")
+        elif item.status == "unknown":
+            console.print(f"[yellow]Versão de {item.name} não confirmada: {item.detail}[/yellow]")
+        elif item.status == "newer_than_registry":
+            console.print(f"[cyan]{item.name}: instalação acima da versão estável publicada.[/cyan]")
+    if require_latest and any(item.status != "current" for item in results):
+        raise OmniCLIError(
+            "A política --require-latest exige que todas as CLIs do pipeline correspondam à versão oficial atual. "
+            "Atualize-as pelo método oficial ou use --skip-latest-check após revisar o risco."
+        )
+
+
 @app.command()
 def conceive(
     idea: str = typer.Argument(..., help="Ideia inicial do projeto."),
@@ -80,6 +111,14 @@ def conceive(
     context_preview: bool = typer.Option(
         False, "--context-preview", help="Exibe os trechos selecionados em JSON sem executar provedores."
     ),
+    require_latest: bool = typer.Option(
+        False,
+        "--require-latest",
+        help="Interrompe se houver atualização disponível ou não for possível confirmar a versão oficial.",
+    ),
+    skip_latest_check: bool = typer.Option(
+        False, "--skip-latest-check", help="Pula a consulta às fontes oficiais de versão; mantém a validação local."
+    ),
 ) -> None:
     """Transforma uma ideia em uma proposta arquitetural consolidada."""
     try:
@@ -109,6 +148,7 @@ def conceive(
                     table.add_row(key, ", ".join(value) if isinstance(value, list) else str(value))
                 console.print(table)
             return
+        _provider_preflight(config, require_latest, skip_latest_check)
         runner = _runner(config, verbose, codebase_context)
         final_path, run_workspace, report = runner.run(
             idea=idea,
@@ -135,6 +175,8 @@ def conceive(
 @providers_app.command("check")
 def providers_check(
     config: Path | None = typer.Option(None, "--config", "-c", help="Arquivo YAML de configuração."),
+    check_latest: bool = typer.Option(False, "--latest", help="Compara versões instaladas com fontes oficiais."),
+    output_json: bool = typer.Option(False, "--json", help="Emite o resultado em JSON."),
     capabilities: bool = typer.Option(
         False,
         "--capabilities",
@@ -148,10 +190,34 @@ def providers_check(
 ) -> None:
     """Verifica quais CLIs estão instaladas e respondendo."""
     try:
+        if check_latest and offline:
+            raise ValueError("--latest consulta fontes oficiais e não pode ser combinado com --offline")
         loaded = load_config(config)
     except (OmniCLIError, ValueError) as exc:
         console.print(f"[red]Erro:[/red] {exc}")
         raise typer.Exit(code=1) from exc
+    if check_latest:
+        freshness = check_provider_freshness(loaded)
+        if output_json:
+            console.print_json(json.dumps({
+                "cache_ttl_hours": 12,
+                "providers": [item.as_dict() for item in freshness],
+            }, ensure_ascii=False))
+        else:
+            table = Table("Provedor", "Instalada", "Mais recente", "Estado", "Detalhe")
+            for item in freshness:
+                table.add_row(item.name, item.installed_version or "?", item.latest_version or "?",
+                              item.status, item.detail)
+                if item.documentation_url:
+                    console.print(f"{item.name} documentação oficial: {item.documentation_url}")
+                if item.release_notes_url:
+                    console.print(f"{item.name} notas oficiais: {item.release_notes_url}")
+                if item.update_command_hint:
+                    console.print(f"{item.name} atualização: {item.update_command_hint}")
+            console.print(table)
+        if any(item.status != "current" for item in freshness):
+            raise typer.Exit(code=1)
+        return
     report = diagnose(loaded, check_versions=True, check_capabilities=capabilities, offline=offline)
     table = Table("Provedor", "Comando", "Disponível", "Versão/diagnóstico", "Contrato")
     for provider in report.providers:
@@ -254,6 +320,8 @@ def resume_run(
     project: Path | None = typer.Option(None, "--project", help="Mesma pasta local usada na execução original."),
     repo: str | None = typer.Option(None, "--repo", help="Mesmo repositório Git usado na execução original."),
     ref: str | None = typer.Option(None, "--ref", help="Mesma branch ou tag; fingerprint deve coincidir."),
+    require_latest: bool = typer.Option(False, "--require-latest", help="Exige versão oficial atual das CLIs."),
+    skip_latest_check: bool = typer.Option(False, "--skip-latest-check", help="Pula a consulta remota de versões."),
 ) -> None:
     """Retoma a primeira etapa incompleta de uma execução."""
     try:
@@ -268,6 +336,7 @@ def resume_run(
         if (project or repo) and resume_idea is None:
             raise ValueError("Informe --idea para reconstituir o contexto da execução")
         codebase_context = _context(project, repo, ref, resume_idea or "")
+        _provider_preflight(config, require_latest, skip_latest_check)
         runner = _runner(config, verbose, codebase_context)
         final_path, run_workspace, report = runner.resume(
             run_id=run_id,

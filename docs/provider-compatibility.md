@@ -33,6 +33,7 @@ Depois do bootstrap:
 ```bash
 omnicli doctor --capabilities
 omnicli providers check --capabilities
+omnicli providers check --latest --json
 ```
 
 Esses comandos consultam `--version` e a superfície de ajuda declarada. Não
@@ -61,6 +62,37 @@ O GitHub Actions também executa essa checagem semanalmente e em alterações do
 registro. Ela verifica disponibilidade das fontes e consistência do contrato,
 mas não instala CLIs, não autentica contas e não chama modelos.
 
+## Verificação no início do pipeline
+
+Antes de `conceive` e `run resume`, o OmniCLI verifica localmente a versão e os
+marcadores de uso declarados para cada CLI necessária. Também compara a versão
+instalada com uma fonte oficial de versão, usando cache local por 12 horas. A
+consulta envia somente uma requisição HTTP pública de metadados; não envia
+prompt, repositório, credencial ou informação da execução. A checagem adiciona
+no máximo alguns segundos quando o cache está vencido.
+
+Por padrão, uma versão antiga gera aviso e o pipeline continua. Use
+`--require-latest` para bloquear a execução se uma CLI estiver atrás ou se a
+versão oficial não puder ser confirmada. `--skip-latest-check` ignora a
+consulta remota quando necessário; a verificação local do contrato continua.
+`doctor --capabilities` permanece disponível para diagnóstico manual.
+`providers check --latest --json` executa a comparação sob demanda e inclui os
+links oficiais de documentação e notas de versão.
+
+O OmniCLI não atualiza binários por conta própria. Claude Code pode ser
+instalado por canais stable/latest e por gerenciadores diferentes; Codex também
+tem instaladores distintos. Atualizar automaticamente poderia trocar o canal,
+exigir privilégios, quebrar a instalação ou alterar o ambiente de trabalho. O
+aviso exibe a versão detectada, a fonte das notas oficiais e uma orientação de
+atualização. Siga o método usado na instalação original.
+
+A checagem de versão não interpreta automaticamente cada novidade das notas de
+lançamento nem modifica os argumentos do OmniCLI. Para adotar uma funcionalidade
+nova, a manutenção deve consultar a referência oficial registrada, revisar
+segurança e compatibilidade, adicionar um teste de contrato e atualizar a
+matriz/changelog. Novos recursos de permissões continuam sujeitos à política de
+segurança do projeto.
+
 ## Política de atualização
 
 1. Consultar a documentação oficial antes de atualizar um contrato.
@@ -74,8 +106,9 @@ mas não instala CLIs, não autentica contas e não chama modelos.
    ferramentas é uma decisão explícita do usuário e está fora da V1.
 
 O projeto não promete acompanhar toda feature nova automaticamente. O controle
-responsável é: fontes oficiais rastreadas, diagnóstico local sem custo, testes
-de contrato opt-in e revisão humana antes de alterar o pipeline.
+responsável é: fontes oficiais rastreadas, verificação de versão no início do
+pipeline, diagnóstico local, testes de contrato e revisão humana antes de
+alterar o pipeline.
 
 ## Instalação e atualização
 
