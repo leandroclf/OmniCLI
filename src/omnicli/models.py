@@ -170,6 +170,11 @@ class RunManifest(BaseModel):
     updated_at: datetime = Field(default_factory=utc_now)
     input_file: str | None = None
     input_sha256: str | None = None
+    context_fingerprint: str | None = None
+    context_source_kind: str | None = None
+    context_commit: str | None = None
+    context_dirty: bool | None = None
+    context_files: list[dict[str, str | bool]] = Field(default_factory=list)
     final_output: str | None = None
     output_target: str | None = None
     status: StageStatus = StageStatus.PENDING

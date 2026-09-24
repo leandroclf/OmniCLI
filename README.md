@@ -19,6 +19,9 @@ the [engineering workflow guide](docs/fluxo-engenharia.md) (Portuguese).
 
 Production criteria: [readiness](docs/production-readiness.md) · [production transition plan](docs/plano-transicao-producao.md) · [evaluation contract](docs/evaluation.md) · [release process](docs/release.md)
 
+For an existing project, use [optional codebase context](docs/codebase-context.md)
+to preview selected source excerpts before generating a grounded proposal.
+
 ## Why OmniCLI?
 
 Most agent tools focus on writing code. OmniCLI focuses first on the communication problem that comes before code: turning ambiguous intent into an explicit, challenged, and traceable engineering plan.
@@ -48,7 +51,7 @@ omnicli doctor --capabilities
 
 The bootstrap creates a local virtual environment and configuration. It never uses `sudo`, installs provider CLIs, or contacts a model unless you explicitly pass `--idea`.
 
-After installing and authenticating Gemini CLI, Claude Code, and Codex CLI:
+After installing and authenticating Claude Code and Codex CLI:
 
 ```bash
 omnicli conceive \
@@ -60,14 +63,14 @@ omnicli conceive \
 
 ## Official default invocations
 
-OmniCLI 0.2 uses each provider's documented headless interface instead of assuming every CLI reads a prompt from standard input.
+The current default pipeline uses the documented headless interfaces of Claude Code and Codex CLI.
 
 | Provider | Default invocation shape | Default state |
 |---|---|---|
-| Gemini CLI | `gemini -p "{prompt}" --output-format text` | enabled |
+| Gemini CLI | `gemini -p "{prompt}" --output-format text` | deferred; custom configuration only |
 | Claude Code | `claude -p "{prompt}" --output-format text` | enabled |
 | Codex CLI | `codex exec "{prompt}"` | enabled |
-| GitHub Copilot CLI | `copilot -p "{prompt}"` | enabled, not used by the default pipeline |
+| GitHub Copilot CLI | `copilot -p "{prompt}"` | out of scope; custom configuration only |
 
 `{prompt}` is passed as one process argument without a shell. Custom tools can omit the placeholder to receive the prompt through `stdin`.
 
@@ -97,10 +100,10 @@ When provider authentication is unavailable, use `doctor --offline` for configur
 
 The default pipeline is deliberately sequential:
 
-1. Product discovery with Gemini.
-2. Adversarial review with Claude.
+1. Product discovery with Claude.
+2. Adversarial review with Codex.
 3. Solution architecture with Codex.
-4. Feasibility review with Gemini.
+4. Feasibility review with Claude.
 5. Master proposal editing with Claude.
 
 Each stage receives the original idea and the previous result. Inputs are delimited as untrusted data, and every prompt instructs the provider not to follow embedded attempts to change roles, reveal secrets, or execute commands. This is defense in depth—not a guarantee against prompt injection.

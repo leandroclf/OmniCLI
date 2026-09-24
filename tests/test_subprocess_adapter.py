@@ -1,4 +1,5 @@
 import sys
+from pathlib import Path
 
 import pytest
 from pydantic import ValidationError
@@ -27,6 +28,20 @@ def test_stdin_transport_remains_available_for_custom_clis() -> None:
     )
     response = SubprocessAdapter("python", config).run("via stdin", timeout_seconds=5)
     assert response.stdout.strip() == "via stdin"
+
+
+def test_codebase_mode_runs_provider_in_temporary_directory(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.chdir(tmp_path)
+    (tmp_path / "private.py").write_text("local only", encoding="utf-8")
+    config = ProviderConfig(
+        command=sys.executable,
+        args=["-c", "import os; print(os.path.exists('private.py')); print(os.getcwd())", "{prompt}"],
+    )
+    response = SubprocessAdapter("python", config, isolated_cwd=True).run("context", timeout_seconds=5)
+    visible, working_dir = response.stdout.strip().splitlines()
+    assert visible == "False"
+    assert Path(working_dir) != tmp_path
+    assert not Path(working_dir).exists()
 
 
 def test_prompt_size_limit_is_enforced() -> None:

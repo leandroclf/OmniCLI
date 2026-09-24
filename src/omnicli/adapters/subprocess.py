@@ -5,6 +5,7 @@ import shutil
 import signal
 import subprocess
 import tempfile
+from contextlib import ExitStack
 
 from omnicli.adapters.base import ProviderAdapter, ProviderResponse
 from omnicli.exceptions import ProviderError
@@ -14,9 +15,10 @@ from omnicli.models import ProviderConfig
 class SubprocessAdapter(ProviderAdapter):
     """Adapter for a local, non-interactive AI CLI."""
 
-    def __init__(self, provider_name: str, config: ProviderConfig) -> None:
+    def __init__(self, provider_name: str, config: ProviderConfig, isolated_cwd: bool = False) -> None:
         self.provider_name = provider_name
         self.config = config
+        self.isolated_cwd = isolated_cwd
 
     def invocation(self, prompt: str) -> tuple[list[str], str | None]:
         """Build a shell-free invocation and select argv or stdin transport."""
@@ -105,32 +107,38 @@ class SubprocessAdapter(ProviderAdapter):
     def run(self, prompt: str, timeout_seconds: float) -> ProviderResponse:
         self._ensure_available()
         command, stdin = self.invocation(prompt)
-        stdout_file = tempfile.TemporaryFile(mode="w+b")
-        stderr_file = tempfile.TemporaryFile(mode="w+b")
-        try:
-            process = subprocess.Popen(
-                command,
-                stdin=subprocess.PIPE if stdin is not None else subprocess.DEVNULL,
-                stdout=stdout_file,
-                stderr=stderr_file,
-                env=self._environment(),
-                start_new_session=os.name == "posix",
+        with ExitStack() as stack:
+            working_dir = (
+                stack.enter_context(tempfile.TemporaryDirectory(prefix="omnicli-provider-"))
+                if self.isolated_cwd else None
             )
+            stdout_file = stack.enter_context(tempfile.TemporaryFile(mode="w+b"))
+            stderr_file = stack.enter_context(tempfile.TemporaryFile(mode="w+b"))
             try:
-                process.communicate(input=stdin.encode("utf-8") if stdin is not None else None, timeout=timeout_seconds)
-            except subprocess.TimeoutExpired as exc:
-                self._terminate(process)
-                process.communicate()
-                raise ProviderError(f"Timeout ao executar {self.provider_name} após {timeout_seconds:.0f}s") from exc
-        except subprocess.TimeoutExpired as exc:
-            raise ProviderError(f"Timeout ao executar {self.provider_name} após {timeout_seconds:.0f}s") from exc
-        except OSError as exc:
-            raise ProviderError(f"Falha ao iniciar {self.provider_name}: {exc}") from exc
-        finally:
+                process = subprocess.Popen(
+                    command,
+                    stdin=subprocess.PIPE if stdin is not None else subprocess.DEVNULL,
+                    stdout=stdout_file,
+                    stderr=stderr_file,
+                    env=self._environment(),
+                    cwd=working_dir,
+                    start_new_session=os.name == "posix",
+                )
+                try:
+                    process.communicate(
+                        input=stdin.encode("utf-8") if stdin is not None else None,
+                        timeout=timeout_seconds,
+                    )
+                except subprocess.TimeoutExpired as exc:
+                    self._terminate(process)
+                    process.communicate()
+                    raise ProviderError(
+                        f"Timeout ao executar {self.provider_name} após {timeout_seconds:.0f}s"
+                    ) from exc
+            except OSError as exc:
+                raise ProviderError(f"Falha ao iniciar {self.provider_name}: {exc}") from exc
             stdout_file.flush()
             stderr_file.flush()
-
-        try:
             stdout_file.seek(0)
             stderr_file.seek(0)
             stdout_bytes = stdout_file.read(self.config.max_output_chars + 1)
@@ -148,9 +156,6 @@ class SubprocessAdapter(ProviderAdapter):
                 stderr=stderr_bytes.decode("utf-8", errors="replace"),
                 exit_code=process.returncode or 0,
             )
-        finally:
-            stdout_file.close()
-            stderr_file.close()
 
     @staticmethod
     def _terminate(process: subprocess.Popen[bytes]) -> None:

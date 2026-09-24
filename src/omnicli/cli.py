@@ -10,6 +10,7 @@ from rich.table import Table
 
 from omnicli import __version__
 from omnicli.adapters.subprocess import SubprocessAdapter
+from omnicli.codebase import CodebaseContext, inspect_local, inspect_remote
 from omnicli.config import load_config, write_example_config
 from omnicli.diagnostics import diagnose
 from omnicli.exceptions import OmniCLIError
@@ -27,11 +28,26 @@ app.add_typer(lab_app, name="lab")
 console = Console()
 
 
-def _runner(config_path: Path | None, verbose: bool) -> PipelineRunner:
+def _context(project: Path | None, repo: str | None, ref: str | None, idea: str) -> CodebaseContext | None:
+    if project and repo:
+        raise ValueError("Use apenas --project ou --repo")
+    if ref and not repo:
+        raise ValueError("--ref exige --repo")
+    if project:
+        return inspect_local(project, idea)
+    if repo:
+        return inspect_remote(repo, ref, idea)
+    return None
+
+
+def _runner(config_path: Path | None, verbose: bool, context: CodebaseContext | None = None) -> PipelineRunner:
     config = load_config(config_path)
-    adapters = {name: SubprocessAdapter(name, provider_config) for name, provider_config in config.providers.items()}
+    adapters = {
+        name: SubprocessAdapter(name, provider_config, isolated_cwd=context is not None)
+        for name, provider_config in config.providers.items()
+    }
     logger = console.print if verbose else None
-    return PipelineRunner(config, adapters, logger=logger)
+    return PipelineRunner(config, adapters, logger=logger, codebase_context=context)
 
 
 @app.command()
@@ -58,12 +74,32 @@ def conceive(
         "--refine",
         help="Ativa o loop condicional de qualidade; --loops define o máximo de passagens.",
     ),
+    project: Path | None = typer.Option(None, "--project", help="Pasta local para análise estática limitada."),
+    repo: str | None = typer.Option(None, "--repo", help="URL HTTPS de repositório Git para inspeção somente leitura."),
+    ref: str | None = typer.Option(None, "--ref", help="Branch ou tag do repositório Git."),
+    context_preview: bool = typer.Option(
+        False, "--context-preview", help="Exibe os trechos selecionados em JSON sem executar provedores."
+    ),
 ) -> None:
     """Transforma uma ideia em uma proposta arquitetural consolidada."""
     try:
+        codebase_context = _context(project, repo, ref, idea)
+        if context_preview:
+            if codebase_context is None:
+                raise ValueError("--context-preview exige --project ou --repo")
+            console.print_json(json.dumps(codebase_context.as_dict(), ensure_ascii=False))
+            return
         loaded = load_config(config)
         if dry_run:
             plan = build_execution_plan(loaded, idea, loops, refine=True if refine else None)
+            if codebase_context:
+                plan["codebase"] = {
+                    "source_kind": codebase_context.source_kind,
+                    "commit": codebase_context.commit,
+                    "dirty": codebase_context.dirty,
+                    "fingerprint": codebase_context.fingerprint,
+                    "selected_files": len(codebase_context.files),
+                }
             if output_json:
                 console.print_json(json.dumps(plan, ensure_ascii=False))
             else:
@@ -73,7 +109,7 @@ def conceive(
                     table.add_row(key, ", ".join(value) if isinstance(value, list) else str(value))
                 console.print(table)
             return
-        runner = _runner(config, verbose)
+        runner = _runner(config, verbose, codebase_context)
         final_path, run_workspace, report = runner.run(
             idea=idea,
             loops=loops,
@@ -81,7 +117,7 @@ def conceive(
             workspace_root=workspace,
             refine=True if refine else None,
         )
-    except (OmniCLIError, ValueError) as exc:
+    except (OmniCLIError, OSError, ValueError) as exc:
         console.print(f"[red]Erro:[/red] {exc}")
         raise typer.Exit(code=1) from exc
     console.print(f"[green]Concluído:[/green] {final_path}")
@@ -215,10 +251,24 @@ def resume_run(
         help="Permite retomar com configuração diferente após revisão manual.",
     ),
     verbose: bool = typer.Option(False, "--verbose", "-v", help="Exibe detalhes da execução."),
+    project: Path | None = typer.Option(None, "--project", help="Mesma pasta local usada na execução original."),
+    repo: str | None = typer.Option(None, "--repo", help="Mesmo repositório Git usado na execução original."),
+    ref: str | None = typer.Option(None, "--ref", help="Mesma branch ou tag; fingerprint deve coincidir."),
 ) -> None:
     """Retoma a primeira etapa incompleta de uma execução."""
     try:
-        runner = _runner(config, verbose)
+        loaded = load_config(config)
+        from omnicli.workspace import Workspace
+
+        root = workspace or loaded.pipeline.workspace
+        manifest = Workspace(root, run_id=run_id).load_manifest()
+        resume_idea = idea
+        if resume_idea is None and manifest.input_file:
+            resume_idea = Workspace(root, run_id=run_id).read_text(manifest.input_file).strip()
+        if (project or repo) and resume_idea is None:
+            raise ValueError("Informe --idea para reconstituir o contexto da execução")
+        codebase_context = _context(project, repo, ref, resume_idea or "")
+        runner = _runner(config, verbose, codebase_context)
         final_path, run_workspace, report = runner.resume(
             run_id=run_id,
             output=output,
@@ -226,7 +276,7 @@ def resume_run(
             idea=idea,
             allow_config_change=allow_config_change,
         )
-    except (OmniCLIError, ValueError) as exc:
+    except (OmniCLIError, OSError, ValueError) as exc:
         console.print(f"[red]Erro:[/red] {exc}")
         raise typer.Exit(code=1) from exc
     console.print(f"[green]Retomado e concluído:[/green] {final_path}")
