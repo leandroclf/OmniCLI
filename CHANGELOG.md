@@ -44,6 +44,11 @@ All notable changes to this project will be documented in this file. The format 
 
 ## [Unreleased]
 
+### Changed
+
+- Added optional local/Git codebase inspection, bounded context preview and
+  provenance checks on resume; aligned README with the Claude/Codex default.
+
 ### Planned
 
 - Reusable pipeline packs and proposal-quality evaluations.

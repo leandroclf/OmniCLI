@@ -8,6 +8,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from omnicli.adapters.base import ProviderAdapter
+from omnicli.codebase import CodebaseContext
 from omnicli.config import config_fingerprint, config_snapshot
 from omnicli.exceptions import PipelineError, ProviderError
 from omnicli.models import (
@@ -54,10 +55,12 @@ class PipelineRunner:
         config: OmniConfig,
         adapters: Mapping[str, ProviderAdapter],
         logger: LogFn | None = None,
+        codebase_context: CodebaseContext | None = None,
     ) -> None:
         self.config = config
         self.adapters = adapters
         self.log = logger or (lambda _message: None)
+        self.codebase_context = codebase_context
 
     def _adapter(self, provider: str) -> ProviderAdapter:
         try:
@@ -78,7 +81,10 @@ class PipelineRunner:
     ) -> str:
         stage = self.config.pipeline.stages[stage_index]
         adapter = self._adapter(stage.provider)
-        prompt = build_stage_prompt(stage, idea, previous_output, loop, total_loops)
+        prompt = build_stage_prompt(
+            stage, idea, previous_output, loop, total_loops,
+            self.codebase_context.prompt_text() if self.codebase_context else None,
+        )
         prompt_path = workspace.write_text(
             f"{loop:02d}-{stage_index + 1:02d}-{stage.name}.prompt.md",
             prompt if self.config.pipeline.retain_prompt_content else "[prompt content disabled by configuration]\n",
@@ -311,6 +317,12 @@ class PipelineRunner:
             run_id=workspace.run_id,
             input_file=str(input_path.relative_to(workspace.path)) if input_path else None,
             input_sha256=input_sha256,
+            context_fingerprint=self.codebase_context.fingerprint if self.codebase_context else None,
+            context_source_kind=self.codebase_context.source_kind if self.codebase_context else None,
+            context_commit=self.codebase_context.commit if self.codebase_context else None,
+            context_dirty=self.codebase_context.dirty if self.codebase_context else None,
+            context_files=[{"path": item.path, "sha256": item.sha256, "truncated": item.truncated}
+                           for item in self.codebase_context.files] if self.codebase_context else [],
             output_target=str(output or self.config.pipeline.output),
             config_snapshot=config_snapshot(self.config),
             config_fingerprint=config_fingerprint(self.config),
@@ -417,6 +429,12 @@ class PipelineRunner:
         if not workspace.manifest_path.exists():
             raise PipelineError(f"Execução não encontrada: {run_id}")
         manifest = workspace.load_manifest()
+        current_context = self.codebase_context.fingerprint if self.codebase_context else None
+        if manifest.context_fingerprint != current_context:
+            raise PipelineError(
+                "O contexto do projeto está ausente ou mudou; "
+                "informe o mesmo --project/--repo e verifique o fingerprint"
+            )
         if manifest.config_fingerprint and not allow_config_change:
             current_fingerprint = config_fingerprint(self.config)
             if current_fingerprint != manifest.config_fingerprint:

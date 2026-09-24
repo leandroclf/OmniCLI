@@ -33,6 +33,8 @@ The roadmap protects OmniCLI's core idea: improve human–AI communication throu
 
 ## 0.5 — Extension ecosystem
 
+- [x] Optional bounded, read-only codebase context with preview and provenance.
+- [ ] Human evaluation of grounded proposals against idea-only proposals.
 - [ ] Documented provider adapter API and entry-point discovery.
 - [ ] Provider capability metadata and graceful fallback policies.
 - [ ] Pipeline pack registry format with local-first installation.
