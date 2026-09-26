@@ -20,7 +20,7 @@ jobs:
   sources:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Check official documentation URLs
         run: bash scripts/check-official-docs.sh
       - uses: actions/setup-python@v5
